@@ -9,6 +9,7 @@ const UploadPage = () => {
     authors: '',
     year: new Date().getFullYear(),
     tags: '',
+    assignment_type: '',
     privacy_level: 'private',
   });
   const [pdfFile, setPdfFile] = useState(null);
@@ -40,6 +41,7 @@ const UploadPage = () => {
       submitData.append('abstract', formData.abstract);
       submitData.append('authors', formData.authors);
       submitData.append('year', formData.year.toString());
+      submitData.append('assignment_type', formData.assignment_type);
       submitData.append('privacy_level', formData.privacy_level);
 
       if (formData.tags) {
@@ -132,6 +134,26 @@ const UploadPage = () => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
+            </div>
+
+            <div>
+              <label htmlFor="assignment_type" className="block text-sm font-medium text-gray-700">
+                Assignment Type *
+              </label>
+              <select
+                id="assignment_type"
+                name="assignment_type"
+                required
+                value={formData.assignment_type}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="">Select assignment type</option>
+                <option value="skripsi">Tugas Akhir/Skripsi</option>
+                <option value="tugas_matkul">Tugas Mata Kuliah</option>
+                <option value="laporan_kp">Laporan Kerja Praktik</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
             </div>
 
             <div>

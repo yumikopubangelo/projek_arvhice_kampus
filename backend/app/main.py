@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
-from app.routers import auth, projects, search, access
+from app.routers import auth, projects, search, access, files
 
 settings = get_settings()
 
@@ -32,6 +32,7 @@ app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(projects.router, prefix="/api", tags=["projects"])
 app.include_router(search.router, prefix="/api", tags=["search"])
 app.include_router(access.router, prefix="/api", tags=["access"])
+app.include_router(files.router, prefix="/api", tags=["files"])
 
 # =====================================================
 # ROOT & HEALTH CHECK

@@ -54,7 +54,10 @@ async def search_projects(
         query = query.filter(Project.year == year)
 
     if tag:
-        query = query.filter(Project.tags.contains([tag]))
+        # Case-insensitive partial match in tags
+        query = query.filter(
+            func.array_to_string(Project.tags, ' ').ilike(f'%{tag}%')
+        )
 
     if privacy_level:
         query = query.filter(Project.privacy_level == privacy_level)

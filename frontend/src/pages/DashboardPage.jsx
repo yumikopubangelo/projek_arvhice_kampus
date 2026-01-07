@@ -49,10 +49,13 @@ const DashboardPage = () => {
   };
 
   const handleProjectClick = (project) => {
-    // Only allow editing if user is the owner
-    if (user?.id === project.uploaded_by) {
+    // Only allow editing if user is the owner and is a student
+    if (user?.role === 'student' && user?.id === project.uploaded_by) {
       setEditingProject(project);
       setShowEditModal(true);
+    } else {
+      // For others, navigate to project detail
+      window.location.href = `/projects/${project.id}`;
     }
   };
 

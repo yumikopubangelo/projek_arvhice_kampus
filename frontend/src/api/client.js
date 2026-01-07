@@ -33,8 +33,8 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Encrypt sensitive data in request body
-    if (config.data && typeof config.data === 'object') {
+    // Encrypt sensitive data in request body (only for JSON requests)
+    if (config.data && typeof config.data === 'object' && config.headers['Content-Type'] === 'application/json') {
       config.data = encryptSensitiveFields(config.data);
     }
 

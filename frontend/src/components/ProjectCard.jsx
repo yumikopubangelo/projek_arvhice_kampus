@@ -1,10 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ProjectCard = ({ project, onClick }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(project);
+    } else {
+      navigate(`/projects/${project.id}`);
+    }
+  };
+
   return (
     <div
       className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
-      onClick={() => onClick && onClick(project)}
+      onClick={handleClick}
     >
       <h3 className="text-xl font-semibold text-gray-900 mb-2">
         {project.title}

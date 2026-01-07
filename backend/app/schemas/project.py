@@ -37,6 +37,7 @@ class ProjectBase(BaseModel):
     semester: Optional[str] = None
     class_name: Optional[str] = None
     course_code: Optional[str] = None
+    assignment_type: Optional[str] = None
     privacy_level: PrivacyLevel = PrivacyLevel.PRIVATE
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
@@ -130,6 +131,7 @@ class ProjectUpdate(BaseModel):
     semester: Optional[str] = None
     class_name: Optional[str] = None
     course_code: Optional[str] = None
+    assignment_type: Optional[str] = None
     status: Optional[ProjectStatus] = None
     privacy_level: Optional[PrivacyLevel] = None
     code_repo_url: Optional[HttpUrl] = None

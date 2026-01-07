@@ -1,5 +1,6 @@
-from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from cryptography.hazmat.backends import default_backend
 import base64
 import os
 from app.config import get_settings
@@ -28,7 +29,7 @@ def _get_aes_key():
 
 def encrypt_data(data: str) -> str:
     """
-    Encrypt sensitive data using AES
+    Encrypt sensitive data using AES (compatible with CryptoJS)
     Args:
         data: Plain text data to encrypt
     Returns:
@@ -36,17 +37,24 @@ def encrypt_data(data: str) -> str:
     """
     try:
         key = _get_aes_key()
-        cipher = AES.new(key, AES.MODE_CBC)
-        ct_bytes = cipher.encrypt(pad(data.encode(), AES.block_size))
-        iv = cipher.iv
-        encrypted = base64.b64encode(iv + ct_bytes).decode()
+        iv = os.urandom(16)  # Generate random IV
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        
+        padder = padding.PKCS7(algorithms.AES.block_size).padder()
+        padded_data = padder.update(data.encode()) + padder.finalize()
+        
+        ct = encryptor.update(padded_data) + encryptor.finalize()
+        
+        # Combine IV and ciphertext, then base64 encode
+        encrypted = base64.b64encode(iv + ct).decode()
         return encrypted
     except Exception as e:
         raise ValueError(f"Encryption failed: {str(e)}")
 
 def decrypt_data(encrypted_data: str) -> str:
     """
-    Decrypt sensitive data using AES
+    Decrypt sensitive data using AES (compatible with CryptoJS)
     Args:
         encrypted_data: Encrypted data as base64 string
     Returns:
@@ -55,10 +63,18 @@ def decrypt_data(encrypted_data: str) -> str:
     try:
         key = _get_aes_key()
         encrypted_bytes = base64.b64decode(encrypted_data)
+        
         iv = encrypted_bytes[:16]
         ct = encrypted_bytes[16:]
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        pt = unpad(cipher.decrypt(ct), AES.block_size)
+        
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+        
+        padded_pt = decryptor.update(ct) + decryptor.finalize()
+        
+        unpadder = padding.PKCS7(algorithms.AES.block_size).unpadder()
+        pt = unpadder.update(padded_pt) + unpadder.finalize()
+        
         return pt.decode()
     except Exception as e:
         # If decryption fails, return original (might not be encrypted)

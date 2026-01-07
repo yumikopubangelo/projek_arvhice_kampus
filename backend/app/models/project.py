@@ -58,12 +58,17 @@ class Project(Base):
     # Academic Context
     year = Column(Integer, nullable=False, index=True)
     semester = Column(
-        String(20), 
+        String(20),
         nullable=True,
         comment="'Ganjil' or 'Genap'"
     )
     class_name = Column(String(100), nullable=True)
     course_code = Column(String(50), nullable=True)
+    assignment_type = Column(
+        String(50),
+        nullable=True,
+        comment="Type of assignment: 'skripsi', 'tugas_matkul', 'laporan_kp', 'lainnya'"
+    )
     
     # Status
     status = Column(
@@ -181,36 +186,81 @@ class Project(Base):
     def can_access(self, user_id: int, user_role: str) -> bool:
         """
         Check if a user can access this project's content
-        
+
         Args:
             user_id: ID of user requesting access
             user_role: Role of user ('student' or 'dosen')
-        
+
         Returns:
             bool: True if user can access, False otherwise
         """
         # Owner can always access
         if user_id == self.uploaded_by:
             return True
-        
+
         # Public projects are accessible to everyone
         if self.privacy_level == PrivacyLevel.PUBLIC:
             return True
-        
+
         # Advisor can access if privacy is ADVISOR or higher
         if self.advisor_id == user_id and self.privacy_level in [
-            PrivacyLevel.ADVISOR, 
-            PrivacyLevel.CLASS, 
+            PrivacyLevel.ADVISOR,
+            PrivacyLevel.CLASS,
             PrivacyLevel.PUBLIC
         ]:
             return True
-        
+
+        # Dosen can access private projects for metadata viewing
+        if user_role == 'dosen':
+            return True
+
         # For CLASS level, need to check if user is in same class
         # (This would require additional logic based on your class system)
         if self.privacy_level == PrivacyLevel.CLASS:
             # TODO: Implement class membership check
             pass
-        
+
+        # Otherwise, check if access request is approved
+        # (This would be checked in the access_requests relationship)
+        return False
+
+    def can_access_full_content(self, user_id: int, user_role: str) -> bool:
+        """
+        Check if a user can access the full content (PDF, etc.) of this project
+
+        Args:
+            user_id: ID of user requesting access
+            user_role: Role of user ('student' or 'dosen')
+
+        Returns:
+            bool: True if user can access full content, False otherwise
+        """
+        # Owner can always access
+        if user_id == self.uploaded_by:
+            return True
+
+        # Public projects are fully accessible to everyone
+        if self.privacy_level == PrivacyLevel.PUBLIC:
+            return True
+
+        # Advisor can access if privacy is ADVISOR or higher
+        if self.advisor_id == user_id and self.privacy_level in [
+            PrivacyLevel.ADVISOR,
+            PrivacyLevel.CLASS,
+            PrivacyLevel.PUBLIC
+        ]:
+            return True
+
+        # Dosen can only see metadata for private projects, not full content
+        if user_role == 'dosen' and self.privacy_level == PrivacyLevel.PRIVATE:
+            return False
+
+        # For CLASS level, need to check if user is in same class
+        # (This would require additional logic based on your class system)
+        if self.privacy_level == PrivacyLevel.CLASS:
+            # TODO: Implement class membership check
+            pass
+
         # Otherwise, check if access request is approved
         # (This would be checked in the access_requests relationship)
         return False
