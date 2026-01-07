@@ -34,7 +34,7 @@ class User(Base):
     title = Column(String(50), nullable=True, comment="Academic title: Dr., Prof., etc.")
     
     # Contact
-    phone = Column(String(20), nullable=True)
+    phone = Column(String(255), nullable=True)
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)

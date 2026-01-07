@@ -4,8 +4,9 @@ import { encryptSensitiveFields } from '../utils/encryption';
 // =====================================================
 // API BASE URL
 // =====================================================
-// Always use /api since nginx proxies to backend
-const API_BASE_URL = '/api';
+// Use /api for production (nginx), localhost:8000/api for development
+const isProduction = import.meta.env.PROD;
+const API_BASE_URL = isProduction ? '/api' : 'http://localhost:8000/api';
 
 // =====================================================
 // CREATE AXIOS INSTANCE

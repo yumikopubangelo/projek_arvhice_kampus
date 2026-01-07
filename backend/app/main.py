@@ -18,12 +18,7 @@ app = FastAPI(
 # =====================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",      # Vite dev server
-        "http://127.0.0.1:5173",      # Alternative localhost
-        "http://localhost:3000",      # Jika pake port 3000
-        "http://localhost",           # NGINX production
-    ],
+    allow_origins=["*"],              # Allow all origins for development
     allow_credentials=True,           # PENTING: Untuk JWT cookies/tokens
     allow_methods=["*"],              # Allow all HTTP methods
     allow_headers=["*"],              # Allow all headers
