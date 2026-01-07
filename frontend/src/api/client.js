@@ -1,34 +1,45 @@
 import axios from 'axios';
 
-// Detect environment
+// =====================================================
+// API BASE URL
+// =====================================================
 const isDevelopment = import.meta.env.MODE === 'development';
 
-// API Base URL
 const API_BASE_URL = isDevelopment
-  ? 'http://localhost:8000/api'  // Direct ke backend container
+  ? 'http://localhost:8000/api'  // Backend Docker container
   : '/api';  // Production: melalui NGINX
 
-// Create axios instance
+// =====================================================
+// CREATE AXIOS INSTANCE
+// =====================================================
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 30000, // 30 seconds
+  withCredentials: true, // PENTING: Untuk mengirim cookies/credentials
 });
 
-// Request interceptor to add auth token
+// =====================================================
+// REQUEST INTERCEPTOR - ADD JWT TOKEN
+// =====================================================
 api.interceptors.request.use(
   (config) => {
+    // Get token from localStorage
     const token = localStorage.getItem('token');
+    
     if (token) {
+      // Add Authorization header
       config.headers.Authorization = `Bearer ${token}`;
     }
     
+    // Debug log (hapus di production)
     console.log('🚀 API Request:', {
       method: config.method?.toUpperCase(),
       url: config.url,
       baseURL: config.baseURL,
+      hasToken: !!token,
     });
     
     return config;
@@ -39,12 +50,16 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle 401
+// =====================================================
+// RESPONSE INTERCEPTOR - HANDLE ERRORS
+// =====================================================
 api.interceptors.response.use(
   (response) => {
+    // Debug log (hapus di production)
     console.log('✅ API Response:', {
       status: response.status,
       url: response.config.url,
+      data: response.data,
     });
     return response;
   },
@@ -55,7 +70,9 @@ api.interceptors.response.use(
       url: error.config?.url,
     });
     
+    // Handle 401 Unauthorized - redirect to login
     if (error.response?.status === 401) {
+      // Clear token
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       

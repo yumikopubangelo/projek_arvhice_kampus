@@ -23,6 +23,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register new user (student or dosen)
     """
+    print(f"📝 Registration attempt: {user_data.email}")
+    
     # Check if email already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -58,6 +60,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     
+    print(f"✅ User registered successfully: {new_user.email}")
+    
     return new_user
 
 
@@ -69,10 +73,13 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """
     Login user and return JWT token
     """
+    print(f"🔐 Login attempt: {credentials.email}")
+    
     # Find user by email
     user = db.query(User).filter(User.email == credentials.email).first()
     
     if not user:
+        print(f"❌ User not found: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -80,6 +87,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     
     # Verify password
     if not verify_password(credentials.password, user.hashed_password):
+        print(f"❌ Invalid password for: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -87,6 +95,7 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     
     # Check if user is active
     if not user.is_active:
+        print(f"❌ Inactive user: {credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Account is deactivated"
@@ -98,6 +107,8 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     
     # Generate JWT token
     access_token = create_access_token(user_id=user.id, role=user.role)
+    
+    print(f"✅ Login successful: {user.email}")
     
     return {
         "access_token": access_token,
@@ -114,6 +125,22 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 # =====================================================
 # HELPER FUNCTIONS
 # =====================================================
+def create_access_token(user_id: int, role: str) -> str:
+    """
+    Create JWT access token
+    """
+    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    payload = {
+        "sub": str(user_id),
+        "role": role,
+        "exp": expire
+    }
+
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return token
+
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
@@ -134,14 +161,19 @@ def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-    except JWTError:
+        print(f"🔍 Token validated for user_id: {user_id}")
+
+    except JWTError as e:
+        print(f"❌ JWT Error: {e}")
         raise credentials_exception
 
     user = db.query(User).filter(User.id == int(user_id)).first()
 
     if user is None:
+        print(f"❌ User not found for id: {user_id}")
         raise credentials_exception
 
+    print(f"✅ Current user: {user.email}")
     return user
 
 
@@ -151,30 +183,9 @@ def get_current_user(
 @router.get("/me", response_model=UserRead)
 async def get_current_user_profile(
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
 ):
     """
     Get current logged-in user profile
     """
+    print(f"👤 Get profile: {current_user.email}")
     return current_user
-
-
-def create_access_token(user_id: int, role: str) -> str:
-    """
-    Create JWT access token
-    """
-    expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    payload = {
-        "sub": str(user_id),
-        "role": role,
-        "exp": expire
-    }
-
-    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
-    return token
-
-
-# OAuth2 scheme for token extraction
-from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")

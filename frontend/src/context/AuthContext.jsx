@@ -42,7 +42,14 @@ export const AuthProvider = ({ children }) => {
       const response = await api.post('/auth/register', userData);
       return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: error.response?.data?.detail || 'Registration failed' };
+      const detail = error.response?.data?.detail;
+      let errorMessage = 'Registration failed';
+      if (Array.isArray(detail)) {
+        errorMessage = detail.map(err => err.msg).join(', ');
+      } else if (typeof detail === 'string') {
+        errorMessage = detail;
+      }
+      return { success: false, error: errorMessage };
     }
   };
 

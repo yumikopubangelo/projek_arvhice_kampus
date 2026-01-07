@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  // Tailwind v4 auto-detects content dari file structure
-  // Config ini optional, hanya jika perlu override
-  
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {
       // Custom colors (optional)
@@ -22,4 +23,5 @@ export default {
       },
     },
   },
+  plugins: [],
 };

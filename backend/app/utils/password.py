@@ -5,8 +5,8 @@ from passlib.exc import UnknownHashError
 # =====================================================
 # PASSWORD HASHING CONTEXT
 # =====================================================
-# Support both bcrypt and pbkdf2_sha256 for backward compatibility
-pwd_context = CryptContext(schemes=["bcrypt", "pbkdf2_sha256"], deprecated="auto")
+# Use pbkdf2_sha256 to avoid bcrypt 72-byte limit issues
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 
 # =====================================================
@@ -23,6 +23,10 @@ def hash_password(password: str) -> str:
     Returns:
         str: Hashed password string
     """
+    # Truncate password to 72 bytes to comply with bcrypt limit
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password = password_bytes[:72].decode('utf-8', errors='ignore')
     return pwd_context.hash(password)
 
 

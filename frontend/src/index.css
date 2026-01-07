@@ -1,9 +1,10 @@
 /* ============================================
-   TAILWIND CSS v4 - NEW SYNTAX
+   TAILWIND CSS v3 - STANDARD DIRECTIVES
    ============================================ */
 
-/* Import Tailwind v4 */
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* ============================================
    CUSTOM STYLES (Optional)

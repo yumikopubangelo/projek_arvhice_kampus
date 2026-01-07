@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -46,22 +46,21 @@ class ProjectCreate(ProjectBase):
     """Schema for creating new projects"""
     pass  # Inherits all fields from ProjectBase
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "title": "Machine Learning Analysis of Student Performance",
-                "abstract": "This project analyzes student performance data using various ML algorithms...",
-                "authors": ["John Doe", "Jane Smith"],
-                "tags": ["Machine Learning", "Data Analysis", "Python"],
-                "year": 2024,
-                "semester": "Ganjil",
-                "class_name": "Computer Science 101",
-                "course_code": "CS101",
-                "privacy_level": "private",
-                "code_repo_url": "https://github.com/johndoe/ml-student-analysis",
-                "dataset_url": "https://example.com/dataset.csv"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "title": "Machine Learning Analysis of Student Performance",
+            "abstract": "This project analyzes student performance data using various ML algorithms...",
+            "authors": ["John Doe", "Jane Smith"],
+            "tags": ["Machine Learning", "Data Analysis", "Python"],
+            "year": 2024,
+            "semester": "Ganjil",
+            "class_name": "Computer Science 101",
+            "course_code": "CS101",
+            "privacy_level": "private",
+            "code_repo_url": "https://github.com/johndoe/ml-student-analysis",
+            "dataset_url": "https://example.com/dataset.csv"
         }
+    })
 
 
 class ProjectRead(ProjectBase):
@@ -83,45 +82,43 @@ class ProjectRead(ProjectBase):
     uploader: Optional[dict] = None  # Simplified user info
     advisor: Optional[dict] = None   # Simplified user info
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
-            "example": {
+    model_config = ConfigDict(from_attributes=True, json_schema_extra={
+        "example": {
+            "id": 1,
+            "title": "Machine Learning Analysis of Student Performance",
+            "abstract": "This project analyzes student performance data using various ML algorithms...",
+            "abstract_preview": "This project analyzes student performance data using various ML algorithms...",
+            "authors": ["John Doe", "Jane Smith"],
+            "tags": ["Machine Learning", "Data Analysis", "Python"],
+            "year": 2024,
+            "semester": "Ganjil",
+            "class_name": "Computer Science 101",
+            "course_code": "CS101",
+            "status": "ongoing",
+            "privacy_level": "private",
+            "pdf_file_path": "/uploads/projects/1/project.pdf",
+            "pdf_file_size": 2048576,
+            "code_repo_url": "https://github.com/johndoe/ml-student-analysis",
+            "dataset_url": "https://example.com/dataset.csv",
+            "supplementary_files": ["/uploads/projects/1/data.csv", "/uploads/projects/1/results.png"],
+            "uploaded_by": 1,
+            "advisor_id": 2,
+            "view_count": 15,
+            "download_count": 3,
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+            "uploader": {
                 "id": 1,
-                "title": "Machine Learning Analysis of Student Performance",
-                "abstract": "This project analyzes student performance data using various ML algorithms...",
-                "abstract_preview": "This project analyzes student performance data using various ML algorithms...",
-                "authors": ["John Doe", "Jane Smith"],
-                "tags": ["Machine Learning", "Data Analysis", "Python"],
-                "year": 2024,
-                "semester": "Ganjil",
-                "class_name": "Computer Science 101",
-                "course_code": "CS101",
-                "status": "ongoing",
-                "privacy_level": "private",
-                "pdf_file_path": "/uploads/projects/1/project.pdf",
-                "pdf_file_size": 2048576,
-                "code_repo_url": "https://github.com/johndoe/ml-student-analysis",
-                "dataset_url": "https://example.com/dataset.csv",
-                "supplementary_files": ["/uploads/projects/1/data.csv", "/uploads/projects/1/results.png"],
-                "uploaded_by": 1,
-                "advisor_id": 2,
-                "view_count": 15,
-                "download_count": 3,
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
-                "uploader": {
-                    "id": 1,
-                    "full_name": "John Doe",
-                    "email": "john@university.edu"
-                },
-                "advisor": {
-                    "id": 2,
-                    "full_name": "Dr. Jane Smith",
-                    "email": "jane@university.edu"
-                }
+                "full_name": "John Doe",
+                "email": "john@university.edu"
+            },
+            "advisor": {
+                "id": 2,
+                "full_name": "Dr. Jane Smith",
+                "email": "jane@university.edu"
             }
         }
+    })
 
 
 class ProjectUpdate(BaseModel):
@@ -138,14 +135,13 @@ class ProjectUpdate(BaseModel):
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "title": "Updated: Machine Learning Analysis of Student Performance",
-                "status": "completed",
-                "privacy_level": "advisor"
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "title": "Updated: Machine Learning Analysis of Student Performance",
+            "status": "completed",
+            "privacy_level": "advisor"
         }
+    })
 
 
 class ProjectSearch(BaseModel):
@@ -160,17 +156,16 @@ class ProjectSearch(BaseModel):
     skip: int = 0
     limit: int = 20
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "machine learning",
-                "year": 2024,
-                "tag": "Python",
-                "privacy_level": "public",
-                "skip": 0,
-                "limit": 10
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "query": "machine learning",
+            "year": 2024,
+            "tag": "Python",
+            "privacy_level": "public",
+            "skip": 0,
+            "limit": 10
         }
+    })
 
 
 class ProjectSummary(BaseModel):
@@ -193,5 +188,4 @@ class ProjectSummary(BaseModel):
     uploader_name: Optional[str] = None
     advisor_name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

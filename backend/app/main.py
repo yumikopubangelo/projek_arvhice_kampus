@@ -1,17 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.routers import auth, projects, search, access
 
-# =====================================================
-# LOAD SETTINGS
-# =====================================================
 settings = get_settings()
 
-# =====================================================
-# FASTAPI APPLICATION
-# =====================================================
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
@@ -19,14 +14,20 @@ app = FastAPI(
 )
 
 # =====================================================
-# CORS MIDDLEWARE
+# CORS MIDDLEWARE - FIX UNTUK VITE DEV SERVER
 # =====================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[
+        "http://localhost:5173",      # Vite dev server
+        "http://127.0.0.1:5173",      # Alternative localhost
+        "http://localhost:3000",      # Jika pake port 3000
+        "http://localhost",           # NGINX production
+    ],
+    allow_credentials=True,           # PENTING: Untuk JWT cookies/tokens
+    allow_methods=["*"],              # Allow all HTTP methods
+    allow_headers=["*"],              # Allow all headers
+    expose_headers=["*"],             # Expose all response headers
 )
 
 # =====================================================
@@ -49,6 +50,6 @@ def root():
     }
 
 
-@app.get("/health", tags=["health"])
+@app.get("/api/health", tags=["health"])
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "message": "API is working"}

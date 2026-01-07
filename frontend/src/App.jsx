@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './components/Navbar';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -9,7 +10,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
-import TestPage from './pages/TestPage';
+
 
 // Di dalam <Routes>:
 
@@ -19,6 +20,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="App">
+          <Navbar />
           <Routes>
             <Route path="/test" element={<TestPage />} /> {/* ✅ BENAR! */}
             <Route path="/" element={<HomePage />} />

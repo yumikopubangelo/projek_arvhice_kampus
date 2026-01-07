@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 
 from app.database import get_db
@@ -82,8 +82,23 @@ async def create_project(
         new_project.pdf_file_path = file_path
         new_project.pdf_file_size = file_size
         db.commit()
-    
-    return new_project
+
+    # Format project for response
+    project_dict = new_project.__dict__.copy()
+    project_dict.pop('_sa_instance_state', None)
+
+    # Ensure supplementary_files is a list
+    if project_dict.get('supplementary_files') is None:
+        project_dict['supplementary_files'] = []
+
+    # Format uploader as dict
+    project_dict['uploader'] = {
+        'id': current_user.id,
+        'full_name': current_user.full_name,
+        'email': current_user.email
+    }
+
+    return project_dict
 
 
 # =====================================================
@@ -102,23 +117,50 @@ async def get_projects(
     """
     Get all projects (filtered by access permissions)
     """
-    query = db.query(Project)
-    
+    query = db.query(Project).options(
+        # Eager load uploader relationship
+        joinedload(Project.uploader)
+    ).join(Project.uploader)
+
     # Apply filters
     if year:
         query = query.filter(Project.year == year)
-    
+
     if tag:
         query = query.filter(Project.tags.contains([tag]))
-    
+
     if privacy_level:
         query = query.filter(Project.privacy_level == privacy_level)
-    
+
     # Filter by access permissions
     # TODO: Implement proper access control based on privacy levels
-    
+
     projects = query.offset(skip).limit(limit).all()
-    return projects
+
+    # Format projects for response
+    formatted_projects = []
+    for project in projects:
+        project_dict = project.__dict__.copy()
+        # Remove SQLAlchemy internal fields
+        project_dict.pop('_sa_instance_state', None)
+
+        # Ensure supplementary_files is a list
+        if project_dict.get('supplementary_files') is None:
+            project_dict['supplementary_files'] = []
+
+        # Format uploader as dict
+        if project.uploader:
+            project_dict['uploader'] = {
+                'id': project.uploader.id,
+                'full_name': project.uploader.full_name,
+                'email': project.uploader.email
+            }
+        else:
+            project_dict['uploader'] = None
+
+        formatted_projects.append(project_dict)
+
+    return formatted_projects
 
 
 # =====================================================
@@ -133,26 +175,46 @@ async def get_project(
     """
     Get project by ID
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
-    
+    project = db.query(Project).options(
+        joinedload(Project.uploader)
+    ).join(Project.uploader).filter(Project.id == project_id).first()
+
     if not project:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Project not found"
         )
-    
+
     # Check access permissions
     if not project.can_access(current_user.id, current_user.role):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to access this project"
         )
-    
+
     # Increment view count
     project.view_count += 1
     db.commit()
-    
-    return project
+
+    # Format project for response
+    project_dict = project.__dict__.copy()
+    project_dict.pop('_sa_instance_state', None)
+
+    # Ensure supplementary_files is a list
+    if project_dict.get('supplementary_files') is None:
+        project_dict['supplementary_files'] = []
+
+    # Format uploader as dict
+    if project.uploader:
+        project_dict['uploader'] = {
+            'id': project.uploader.id,
+            'full_name': project.uploader.full_name,
+            'email': project.uploader.email
+        }
+    else:
+        project_dict['uploader'] = None
+
+    return project_dict
 
 
 # =====================================================
@@ -187,11 +249,26 @@ async def update_project(
     update_data = project_data.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(project, key, value)
-    
+
     db.commit()
     db.refresh(project)
-    
-    return project
+
+    # Format project for response
+    project_dict = project.__dict__.copy()
+    project_dict.pop('_sa_instance_state', None)
+
+    # Ensure supplementary_files is a list
+    if project_dict.get('supplementary_files') is None:
+        project_dict['supplementary_files'] = []
+
+    # Format uploader as dict
+    project_dict['uploader'] = {
+        'id': current_user.id,
+        'full_name': current_user.full_name,
+        'email': current_user.email
+    }
+
+    return project_dict
 
 
 # =====================================================
@@ -241,5 +318,24 @@ async def get_my_projects(
     projects = db.query(Project).filter(
         Project.uploaded_by == current_user.id
     ).all()
-    
-    return projects
+
+    # Format projects for response
+    formatted_projects = []
+    for project in projects:
+        project_dict = project.__dict__.copy()
+        project_dict.pop('_sa_instance_state', None)
+
+        # Ensure supplementary_files is a list
+        if project_dict.get('supplementary_files') is None:
+            project_dict['supplementary_files'] = []
+
+        # Format uploader as dict
+        project_dict['uploader'] = {
+            'id': current_user.id,
+            'full_name': current_user.full_name,
+            'email': current_user.email
+        }
+
+        formatted_projects.append(project_dict)
+
+    return formatted_projects
