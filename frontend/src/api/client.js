@@ -1,13 +1,11 @@
 import axios from 'axios';
+import { encryptSensitiveFields } from '../utils/encryption';
 
 // =====================================================
 // API BASE URL
 // =====================================================
-const isDevelopment = import.meta.env.MODE === 'development';
-
-const API_BASE_URL = isDevelopment
-  ? 'http://localhost:8000/api'  // Backend Docker container
-  : '/api';  // Production: melalui NGINX
+// Always use /api since nginx proxies to backend
+const API_BASE_URL = '/api';
 
 // =====================================================
 // CREATE AXIOS INSTANCE
@@ -22,18 +20,23 @@ const api = axios.create({
 });
 
 // =====================================================
-// REQUEST INTERCEPTOR - ADD JWT TOKEN
+// REQUEST INTERCEPTOR - ADD JWT TOKEN & ENCRYPT DATA
 // =====================================================
 api.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('token');
-    
+
     if (token) {
       // Add Authorization header
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
+    // Encrypt sensitive data in request body
+    if (config.data && typeof config.data === 'object') {
+      config.data = encryptSensitiveFields(config.data);
+    }
+
     // Debug log (hapus di production)
     console.log('🚀 API Request:', {
       method: config.method?.toUpperCase(),
@@ -41,7 +44,7 @@ api.interceptors.request.use(
       baseURL: config.baseURL,
       hasToken: !!token,
     });
-    
+
     return config;
   },
   (error) => {

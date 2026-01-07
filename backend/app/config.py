@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from functools import lru_cache
 
 
@@ -40,14 +40,20 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
 
     # =====================================================
+    # ENCRYPTION
+    # =====================================================
+    ENCRYPTION_KEY: str = Field(default="campus-archive-secret-key-2024", description="Key for encrypting sensitive data")
+
+    # =====================================================
     # LOGGING
     # =====================================================
     LOG_LEVEL: str = "INFO"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True
+    )
 
 
 @lru_cache

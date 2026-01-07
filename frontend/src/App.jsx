@@ -22,7 +22,6 @@ function App() {
         <div className="App">
           <Navbar />
           <Routes>
-            <Route path="/test" element={<TestPage />} /> {/* ✅ BENAR! */}
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

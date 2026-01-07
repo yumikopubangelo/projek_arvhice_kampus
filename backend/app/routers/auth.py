@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserRead, Token
 from app.utils.password import hash_password, verify_password
+from app.utils.encryption import decrypt_sensitive_fields
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
@@ -19,39 +20,51 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 # REGISTER ENDPOINT
 # =====================================================
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+async def register(user_data: dict, db: Session = Depends(get_db)):
     """
     Register new user (student or dosen)
     """
-    print(f"📝 Registration attempt: {user_data.email}")
+    # Decrypt sensitive fields
+    decrypted_data = decrypt_sensitive_fields(user_data)
+
+    # Create Pydantic model from decrypted data
+    try:
+        user_create = UserCreate(**decrypted_data)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid data: {str(e)}"
+        )
+
+    print(f"📝 Registration attempt: {user_create.email}")
     
     # Check if email already exists
-    existing_user = db.query(User).filter(User.email == user_data.email).first()
+    existing_user = db.query(User).filter(User.email == user_create.email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Check if student_id already exists (if provided)
-    if user_data.student_id:
-        existing_student = db.query(User).filter(User.student_id == user_data.student_id).first()
+    if user_create.student_id:
+        existing_student = db.query(User).filter(User.student_id == user_create.student_id).first()
         if existing_student:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Student ID already registered"
             )
-    
+
     # Create new user
     new_user = User(
-        email=user_data.email,
-        hashed_password=hash_password(user_data.password),
-        full_name=user_data.full_name,
-        role=user_data.role,
-        student_id=user_data.student_id if user_data.role == "student" else None,
-        department=user_data.department if user_data.role == "dosen" else None,
-        title=user_data.title if user_data.role == "dosen" else None,
-        phone=user_data.phone,
+        email=user_create.email,
+        hashed_password=hash_password(user_create.password),
+        full_name=user_create.full_name,
+        role=user_create.role,
+        student_id=user_create.student_id if user_create.role == "student" else None,
+        department=user_create.department if user_create.role == "dosen" else None,
+        title=user_create.title if user_create.role == "dosen" else None,
+        phone=user_create.phone,
         is_active=True,
         is_verified=False
     )
@@ -69,25 +82,37 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
 # LOGIN ENDPOINT
 # =====================================================
 @router.post("/login", response_model=Token)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+async def login(credentials: dict, db: Session = Depends(get_db)):
     """
     Login user and return JWT token
     """
-    print(f"🔐 Login attempt: {credentials.email}")
+    # Decrypt sensitive fields
+    decrypted_credentials = decrypt_sensitive_fields(credentials)
+
+    # Create Pydantic model
+    try:
+        login_data = UserLogin(**decrypted_credentials)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid login data: {str(e)}"
+        )
+
+    print(f"🔐 Login attempt: {login_data.email}")
     
     # Find user by email
-    user = db.query(User).filter(User.email == credentials.email).first()
-    
+    user = db.query(User).filter(User.email == login_data.email).first()
+
     if not user:
-        print(f"❌ User not found: {credentials.email}")
+        print(f"❌ User not found: {login_data.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
+
     # Verify password
-    if not verify_password(credentials.password, user.hashed_password):
-        print(f"❌ Invalid password for: {credentials.email}")
+    if not verify_password(login_data.password, user.hashed_password):
+        print(f"❌ Invalid password for: {login_data.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
@@ -104,12 +129,12 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     # Update last login
     user.last_login = datetime.utcnow()
     db.commit()
-    
+
     # Generate JWT token
     access_token = create_access_token(user_id=user.id, role=user.role)
-    
+
     print(f"✅ Login successful: {user.email}")
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",
