@@ -15,14 +15,14 @@ const SearchBar = () => {
   };
 
   return (
-    <form onSubmit={handleSearch} className="flex items-center">
-      <div className="relative">
+    <form onSubmit={handleSearch} className="flex items-center w-full max-w-md">
+      <div className="relative w-full">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search projects..."
-          className="w-64 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
         <button
           type="submit"
