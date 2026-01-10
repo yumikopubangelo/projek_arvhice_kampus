@@ -54,14 +54,6 @@ const Navbar = () => {
                 >
                   Search
                 </Link>
-                {user.role === 'student' && (
-                  <Link
-                    to="/upload"
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700"
-                  >
-                    Upload Project
-                  </Link>
-                )}
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-700 hidden lg:block">
                     Welcome, {user.full_name || user.email}
@@ -132,15 +124,6 @@ const Navbar = () => {
                   >
                     Search
                   </Link>
-                  {user.role === 'student' && (
-                    <Link
-                      to="/upload"
-                      onClick={closeMenu}
-                      className="block px-3 py-2 text-base font-medium bg-indigo-600 text-white hover:bg-indigo-700 rounded-md mx-3"
-                    >
-                      Upload Project
-                    </Link>
-                  )}
                   <button
                     onClick={() => {
                       handleLogout();

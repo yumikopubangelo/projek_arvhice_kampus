@@ -99,7 +99,7 @@ const DashboardPage = () => {
             <p className="text-gray-600 mt-1">Welcome, {user?.full_name || user?.email}</p>
           </div>
           
-          {user?.role === 'student' && (
+          {user?.role === 'student' && projects.length > 0 && (
             <Link
               to="/upload"
               className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
@@ -119,7 +119,7 @@ const DashboardPage = () => {
                 to="/upload"
                 className="mt-4 inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
               >
-                Upload your first project
+                Add Project
               </Link>
             )}
           </div>
@@ -157,3 +157,5 @@ const DashboardPage = () => {
     </div>
   );
 };
+
+export default DashboardPage;
