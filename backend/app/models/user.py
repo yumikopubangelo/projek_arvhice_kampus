@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
+import uuid
 from app.database import Base
 
 
@@ -12,6 +13,7 @@ class User(Base):
 
     # Primary Key
     id = Column(Integer, primary_key=True, index=True)
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, unique=True, nullable=False)
     
     # Authentication
     email = Column(String(255), unique=True, index=True, nullable=False)

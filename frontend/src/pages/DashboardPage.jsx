@@ -7,7 +7,7 @@ import ProjectEditModal from '../components/ProjectEditModal';
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const { getProjects, getMyProjects } = useProjects();
+  const { getProjects, getMyProjects, deleteProject } = useProjects();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -61,6 +61,23 @@ const DashboardPage = () => {
 
   const handleProjectUpdate = (updatedProject) => {
     setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
+  };
+
+  const handleProjectDelete = async (project) => {
+    if (window.confirm(`Are you sure you want to delete "${project.title}"? This action cannot be undone.`)) {
+      try {
+        const result = await deleteProject(project.id);
+        if (result.success) {
+          // Remove the project from the local state
+          setProjects(projects.filter(p => p.id !== project.id));
+        } else {
+          setError(result.error);
+        }
+      } catch (err) {
+        console.error('Failed to delete project:', err);
+        setError('Failed to delete project');
+      }
+    }
   };
 
   if (loading) {
@@ -127,6 +144,8 @@ const DashboardPage = () => {
                 key={project.id}
                 project={project}
                 onClick={handleProjectClick}
+                user={user}
+                onDelete={handleProjectDelete}
               />
             ))}
           </div>

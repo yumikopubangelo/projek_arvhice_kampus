@@ -258,17 +258,21 @@ const ProjectDetailPage = () => {
                   <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Supplementary Files</h3>
                     <div className="space-y-2">
-                      {project.supplementary_files.map((file, index) => (
-                        <a
-                          key={index}
-                          href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/files/${project.id}/supplementary/${file}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-md hover:bg-gray-50"
-                        >
-                          📎 {file}
-                        </a>
-                      ))}
+                      {project.supplementary_files.map((filePath, index) => {
+                        // Extract filename from path (e.g., "1/supp_uuid_file.pdf" -> "supp_uuid_file.pdf")
+                        const filename = filePath.split('/').pop();
+                        return (
+                          <a
+                            key={index}
+                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/files/${project.id}/supplementary/${filename}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-md hover:bg-gray-50"
+                          >
+                            📎 {filename}
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                 )}

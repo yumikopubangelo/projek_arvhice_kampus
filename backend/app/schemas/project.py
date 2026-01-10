@@ -41,6 +41,7 @@ class ProjectBase(BaseModel):
     privacy_level: PrivacyLevel = PrivacyLevel.PRIVATE
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
+    video_url: Optional[HttpUrl] = None
 
 
 class ProjectCreate(ProjectBase):
@@ -71,6 +72,9 @@ class ProjectRead(ProjectBase):
     status: ProjectStatus
     pdf_file_path: Optional[str] = None
     pdf_file_size: Optional[int] = None
+    code_repo_url: Optional[HttpUrl] = None
+    dataset_url: Optional[HttpUrl] = None
+    video_url: Optional[HttpUrl] = None
     supplementary_files: List[str] = Field(default_factory=list)
     uploaded_by: int
     advisor_id: Optional[int] = None
@@ -136,6 +140,7 @@ class ProjectUpdate(BaseModel):
     privacy_level: Optional[PrivacyLevel] = None
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
+    video_url: Optional[HttpUrl] = None
 
     model_config = ConfigDict(json_schema_extra={
         "example": {

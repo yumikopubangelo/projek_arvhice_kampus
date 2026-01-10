@@ -52,7 +52,11 @@ const useProjects = () => {
   const updateProject = async (projectId, projectData) => {
     setLoading(true);
     try {
-      const response = await api.put(`/projects/${projectId}`, projectData);
+      // Check if projectData is FormData (for file uploads)
+      const isFormData = projectData instanceof FormData;
+      const response = await api.put(`/projects/${projectId}`, projectData, {
+        headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
+      });
       return { success: true, data: response.data };
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Failed to update project';

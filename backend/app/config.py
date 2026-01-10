@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # =====================================================
     # FILE UPLOAD
     # =====================================================
-    UPLOAD_DIR: str = "/var/uploads/projects"
+    UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE_MB: int = 10
 
     # =====================================================
@@ -52,7 +52,8 @@ class Settings(BaseSettings):
     model_config = ConfigDict(
         env_file=[".env", "../.env"],
         env_file_encoding="utf-8",
-        case_sensitive=True
+        case_sensitive=True,
+        extra="ignore"
     )
 
 

@@ -17,8 +17,9 @@ settings = get_settings()
 # =====================================================
 
 UPLOAD_DIR = Path(settings.UPLOAD_DIR)
-PROJECTS_DIR = UPLOAD_DIR / "projects"
 MAX_FILE_SIZE = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024  # Convert MB to bytes
+MAX_TOTAL_SIZE_MB = 50
+MAX_TOTAL_SIZE = MAX_TOTAL_SIZE_MB * 1024 * 1024  # 50MB total per project
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {
@@ -26,7 +27,8 @@ ALLOWED_EXTENSIONS = {
     'images': ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
     'data': ['.csv', '.xlsx', '.xls', '.json', '.txt'],
     'code': ['.py', '.ipynb', '.r', '.sql', '.md'],
-    'archives': ['.zip', '.tar.gz', '.rar']
+    'archives': ['.zip', '.tar.gz', '.rar'],
+    'presentations': ['.pptx', '.ppt']
 }
 
 # PDF specific settings
@@ -38,20 +40,20 @@ PDF_EXTENSIONS = ['.pdf']
 # =====================================================
 
 def ensure_upload_dirs():
-    """Ensure all necessary upload directories exist"""
-    PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+    """Ensure upload directory exists"""
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def get_project_dir(project_id: int) -> Path:
-    """Get the directory path for a specific project"""
-    return PROJECTS_DIR / str(project_id)
+def get_user_dir(user_uuid: uuid.UUID) -> Path:
+    """Get the directory path for a specific user"""
+    return UPLOAD_DIR / str(user_uuid)
 
 
-def ensure_project_dir(project_id: int) -> Path:
-    """Ensure project directory exists and return its path"""
-    project_dir = get_project_dir(project_id)
-    project_dir.mkdir(parents=True, exist_ok=True)
-    return project_dir
+def ensure_user_dir(user_uuid: uuid.UUID) -> Path:
+    """Ensure user directory exists and return its path"""
+    user_dir = get_user_dir(user_uuid)
+    user_dir.mkdir(parents=True, exist_ok=True)
+    return user_dir
 
 
 # =====================================================
@@ -64,6 +66,15 @@ def validate_file_size(file_size: int) -> None:
         raise HTTPException(
             status_code=413,
             detail=f"File too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB}MB"
+        )
+
+
+def validate_total_size(total_size: int) -> None:
+    """Validate total project files size against maximum allowed"""
+    if total_size > MAX_TOTAL_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Total files size too large. Maximum total size is {MAX_TOTAL_SIZE_MB}MB"
         )
 
 
@@ -86,13 +97,13 @@ def is_pdf_file(filename: str) -> bool:
 # FILE OPERATIONS
 # =====================================================
 
-async def save_project_file(upload_file: UploadFile, project_id: int) -> Tuple[str, int]:
+async def save_project_file(upload_file: UploadFile, user_uuid: uuid.UUID) -> Tuple[str, int]:
     """
     Save an uploaded file for a project.
 
     Args:
         upload_file: FastAPI UploadFile object
-        project_id: ID of the project
+        user_uuid: UUID of the user uploading the file
 
     Returns:
         Tuple[str, int]: (relative_file_path, file_size)
@@ -113,13 +124,13 @@ async def save_project_file(upload_file: UploadFile, project_id: int) -> Tuple[s
             detail="Only PDF files are allowed for project uploads"
         )
 
-    # Ensure project directory exists
-    project_dir = ensure_project_dir(project_id)
+    # Ensure user directory exists
+    user_dir = ensure_user_dir(user_uuid)
 
     # Generate unique filename to prevent conflicts
     original_ext = Path(upload_file.filename).suffix
     unique_filename = f"{uuid.uuid4()}{original_ext}"
-    file_path = project_dir / unique_filename
+    file_path = user_dir / unique_filename
 
     try:
         # Save file asynchronously
@@ -141,13 +152,13 @@ async def save_project_file(upload_file: UploadFile, project_id: int) -> Tuple[s
         )
 
 
-async def save_supplementary_file(upload_file: UploadFile, project_id: int) -> Tuple[str, int]:
+async def save_supplementary_file(upload_file: UploadFile, user_uuid: uuid.UUID) -> Tuple[str, int]:
     """
     Save a supplementary file for a project.
 
     Args:
         upload_file: FastAPI UploadFile object
-        project_id: ID of the project
+        user_uuid: UUID of the user uploading the file
 
     Returns:
         Tuple[str, int]: (relative_file_path, file_size)
@@ -164,13 +175,13 @@ async def save_supplementary_file(upload_file: UploadFile, project_id: int) -> T
 
     validate_file_extension(upload_file.filename, all_allowed)
 
-    # Ensure project directory exists
-    project_dir = ensure_project_dir(project_id)
+    # Ensure user directory exists
+    user_dir = ensure_user_dir(user_uuid)
 
     # Generate unique filename
     original_ext = Path(upload_file.filename).suffix
     unique_filename = f"supp_{uuid.uuid4()}{original_ext}"
-    file_path = project_dir / unique_filename
+    file_path = user_dir / unique_filename
 
     try:
         # Save file
@@ -189,16 +200,17 @@ async def save_supplementary_file(upload_file: UploadFile, project_id: int) -> T
         )
 
 
-def delete_project_files(project_id: int) -> None:
+def delete_project_files(file_paths: list) -> None:
     """
-    Delete all files associated with a project.
+    Delete specific files associated with a project.
 
     Args:
-        project_id: ID of the project
+        file_paths: List of relative file paths to delete
     """
-    project_dir = get_project_dir(project_id)
-    if project_dir.exists():
-        shutil.rmtree(project_dir)
+    for file_path in file_paths:
+        full_path = UPLOAD_DIR / file_path
+        if full_path.exists():
+            full_path.unlink()
 
 
 def delete_file(file_path: str) -> None:
@@ -240,27 +252,6 @@ def get_file_info(file_path: str) -> Optional[dict]:
     }
 
 
-def list_project_files(project_id: int) -> list:
-    """
-    List all files in a project's directory.
-
-    Args:
-        project_id: ID of the project
-
-    Returns:
-        list: List of file information dictionaries
-    """
-    project_dir = get_project_dir(project_id)
-    if not project_dir.exists():
-        return []
-
-    files = []
-    for file_path in project_dir.rglob('*'):
-        if file_path.is_file():
-            relative_path = str(file_path.relative_to(UPLOAD_DIR))
-            files.append(get_file_info(relative_path))
-
-    return files
 
 
 # =====================================================

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProjects } from '../hooks/useProjects';
+import FileUpload from './FileUpload';
 
 const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
   const [formData, setFormData] = useState({
@@ -7,16 +8,21 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
     abstract: '',
     authors: '',
     tags: '',
+    year: new Date().getFullYear(),
+    assignment_type: '',
     semester: '',
     class_name: '',
     course_code: '',
     status: 'ongoing',
     privacy_level: 'private',
     code_repo_url: '',
-    dataset_url: ''
+    dataset_url: '',
+    video_url: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [supplementaryFiles, setSupplementaryFiles] = useState([]);
+  const [pdfFile, setPdfFile] = useState(null);
   const { updateProject } = useProjects();
 
   useEffect(() => {
@@ -26,14 +32,27 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
         abstract: project.abstract || '',
         authors: project.authors ? project.authors.join(', ') : '',
         tags: project.tags ? project.tags.join(', ') : '',
+        year: project.year || new Date().getFullYear(),
+        assignment_type: project.assignment_type || '',
         semester: project.semester || '',
         class_name: project.class_name || '',
         course_code: project.course_code || '',
         status: project.status || 'ongoing',
         privacy_level: project.privacy_level || 'private',
         code_repo_url: project.code_repo_url || '',
-        dataset_url: project.dataset_url || ''
+        dataset_url: project.dataset_url || '',
+        video_url: project.video_url || ''
       });
+
+      // Initialize supplementary files with size information
+      const existingFiles = (project.supplementary_files_info || []).map(fileInfo => ({
+        name: fileInfo.name,
+        path: fileInfo.path,
+        size: fileInfo.size,
+        type: '',
+        uploaded: true
+      }));
+      setSupplementaryFiles(existingFiles);
     }
   }, [project]);
 
@@ -50,19 +69,58 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
     setLoading(true);
 
     try {
-      // Prepare data for API
-      const updateData = {
-        ...formData,
-        authors: formData.authors.split(',').map(a => a.trim()).filter(a => a),
-        tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
-      };
+      // Check if we need to send multipart form data (for file uploads)
+      const hasFiles = pdfFile !== null;
 
-      const result = await updateProject(project.id, updateData);
-      if (result.success) {
-        onUpdate(result.data);
-        onClose();
+      if (hasFiles) {
+        // Send as multipart form data
+        const formDataToSend = new FormData();
+
+        // Add form fields
+        formDataToSend.append('title', formData.title);
+        formDataToSend.append('abstract', formData.abstract);
+        formDataToSend.append('authors', formData.authors);
+        formDataToSend.append('tags', formData.tags);
+        formDataToSend.append('year', formData.year.toString());
+        formDataToSend.append('assignment_type', formData.assignment_type);
+        formDataToSend.append('semester', formData.semester);
+        formDataToSend.append('class_name', formData.class_name);
+        formDataToSend.append('course_code', formData.course_code);
+        formDataToSend.append('privacy_level', formData.privacy_level);
+
+        if (formData.code_repo_url) formDataToSend.append('code_repo_url', formData.code_repo_url);
+        if (formData.dataset_url) formDataToSend.append('dataset_url', formData.dataset_url);
+        if (formData.video_url) formDataToSend.append('video_url', formData.video_url);
+
+        // Add PDF file if selected
+        if (pdfFile) {
+          formDataToSend.append('pdf_file', pdfFile);
+        }
+
+        // Note: supplementary files are handled separately via FileUpload component
+
+        const result = await updateProject(project.id, formDataToSend);
+        if (result.success) {
+          onUpdate(result.data);
+          onClose();
+        } else {
+          setError(result.error);
+        }
       } else {
-        setError(result.error);
+        // Send as JSON
+        const updateData = {
+          ...formData,
+          authors: formData.authors.split(',').map(a => a.trim()).filter(a => a),
+          tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
+        };
+
+        const result = await updateProject(project.id, updateData);
+        if (result.success) {
+          onUpdate(result.data);
+          onClose();
+        } else {
+          setError(result.error);
+        }
       }
     } catch (err) {
       setError('Failed to update project');
@@ -116,6 +174,21 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              PDF Report (Optional - leave empty to keep current)
+            </label>
+            <input
+              type="file"
+              accept=".pdf"
+              onChange={(e) => setPdfFile(e.target.files[0])}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Upload a new PDF report (max 10MB). Current file will be replaced.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Authors (comma-separated)
             </label>
             <input
@@ -138,6 +211,41 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Year
+              </label>
+              <input
+                type="number"
+                name="year"
+                value={formData.year}
+                onChange={handleChange}
+                min="2000"
+                max={new Date().getFullYear() + 1}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assignment Type
+              </label>
+              <select
+                name="assignment_type"
+                value={formData.assignment_type}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select assignment type</option>
+                <option value="skripsi">Tugas Akhir/Skripsi</option>
+                <option value="tugas_matkul">Tugas Mata Kuliah</option>
+                <option value="laporan_kp">Laporan Kerja Praktik</option>
+                <option value="lainnya">Lainnya</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -241,6 +349,25 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Video URL
+            </label>
+            <input
+              type="url"
+              name="video_url"
+              value={formData.video_url}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <FileUpload
+            projectId={project?.id}
+            existingFiles={supplementaryFiles}
+            onFilesChange={setSupplementaryFiles}
+          />
 
           {error && (
             <div className="text-red-600 text-sm">

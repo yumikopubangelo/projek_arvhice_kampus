@@ -4,137 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Campus Archive - Ekosistem Arsip & Manajemen Proyek Akademik</title>
-    <meta name="title" content="Campus Archive - Ekosistem Arsip & Manajemen Proyek Akademik" />
-    <meta name="description" content="Platform arsip digital untuk demokratisasi akses pengetahuan. Kelola tugas akhir, skripsi, dan proyek mahasiswa dengan fitur pencarian canggih, kontrol privasi, dan standar reproducibility." />
-    <meta name="keywords" content="repository kampus, arsip skripsi, manajemen proyek mahasiswa, reproducible research, digital archive, akses komputasi, kolaborasi dosen mahasiswa" />
-    <meta name="author" content="Campus Archive Team" />
-    <meta name="robots" content="index, follow" />
+    <title>Campus Archive - Platform Arsip Karya Akademik Mahasiswa</title>
+    <meta name="description" content="Platform arsip digital untuk mengelola tugas akhir dan skripsi mahasiswa." />
 
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://campusarchive.ac.id/" />
-    <meta property="og:title" content="Campus Archive - Ekosistem Arsip & Manajemen Proyek Akademik" />
-    <meta property="og:description" content="Platform arsip digital untuk mengelola, mencari, dan melestarikan proyek akademik mahasiswa dengan standar reproducibility dan kontrol privasi penuh." />
-    <meta property="og:image" content="https://campusarchive.ac.id/og-image.jpg" />
-    <meta property="og:site_name" content="Campus Archive" />
-
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://campusarchive.ac.id/" />
-    <meta property="twitter:title" content="Campus Archive - Ekosistem Arsip & Manajemen Proyek Akademik" />
-    <meta property="twitter:description" content="Solusi manajemen proyek akademik: Upload, Cari, dan Kolaborasi dengan aman." />
-    <meta property="twitter:image" content="https://campusarchive.ac.id/og-image.jpg" />
-
-    <meta name="theme-color" content="#4f46e5" />
-    
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <link rel="manifest" href="/site.webmanifest" />
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "Campus Archive",
-      "description": "Sistem arsip digital untuk mengelola proyek akademik dan mencegah hilangnya pengetahuan institusional.",
-      "url": "https://campusarchive.ac.id",
-      "applicationCategory": "EducationalApplication",
-      "operatingSystem": "Web Browser",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "IDR"
-      },
-      "featureList": [
-        "Manajemen Proyek Terstruktur (Metadata & Repo Link)",
-        "Pencarian Canggih (Advanced Search & Filtering)",
-        "Kontrol Privasi Granular (Public/Private/Request)",
-        "Manajemen File Aman & Download Tracking",
-        "Kolaborasi Dosen & Mahasiswa",
-        "Arsip Reproducible (Code & Dataset)"
-      ]
-    }
-    </script>
-  </head>
-  <body>
-    <div id="loading" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; align-items: center; justify-content: center; z-index: 9999;">
-      <div style="text-align: center;">
-        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #4f46e5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
-        <p style="color: #6b7280; font-family: system-ui, -apple-system, sans-serif;">Memuat Ekosistem...</p>
-      </div>
-    </div>
-
-    <div id="root">
-      <section id="landing" style="padding: 3rem 2rem; font-family: system-ui, -apple-system, sans-serif; max-width: 1000px; margin: 0 auto; line-height: 1.6; color: #374151;">
-        
-        <div style="text-align: center; margin-bottom: 4rem;">
-          <h1 style="color: #4f46e5; font-size: 2.5rem; margin-bottom: 1rem; font-weight: 800;">Campus Archive</h1>
-          <p style="font-size: 1.25rem; color: #4b5563; max-width: 700px; margin: 0 auto;">
-            Ekosistem pendidikan teknologi yang mengintegrasikan arsip proyek <em>reproducible</em> dan manajemen pengetahuan institusional.
-          </p>
-          <div style="margin-top: 2rem;">
-            <button style="background-color: #4f46e5; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer; margin-right: 1rem;">Mulai Sekarang</button>
-            <button style="background-color: #e5e7eb; color: #374151; padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-weight: 600; cursor: pointer;">Masuk / Login</button>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 3rem; background: #f9fafb; padding: 2rem; border-radius: 1rem;">
-          <h2 style="color: #111827; margin-top: 0;">Mengapa Campus Archive?</h2>
-          <p>
-            Seringkali, hasil karya mahasiswa berupa kode sumber, dataset, dan konfigurasi hilang setelah proyek berakhir, menyebabkan pengetahuan tidak dapat diwariskan[cite: 13, 15]. 
-            Campus Archive hadir untuk mengatasi hilangnya pengetahuan institusional ini [cite: 28] dengan menyediakan platform terstandarisasi.
-          </p>
-        </div>
-
-        <h2 style="text-align: center; color: #111827; margin-bottom: 2rem;">Fitur Utama</h2>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
-          
-          <div style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem;">
-            <h3 style="color: #4f46e5; margin-top: 0;">📁 Manajemen Proyek Terpadu</h3>
-            <p style="font-size: 0.95rem;">
-              Upload proyek lengkap dengan file PDF, metadata detil (tahun, semester, tag), serta tautan ke repository kode dan dataset untuk memastikan karya dapat direproduksi.
-            </p>
-          </div>
-
-          <div style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem;">
-            <h3 style="color: #4f46e5; margin-top: 0;">🔍 Pencarian & Penemuan</h3>
-            <p style="font-size: 0.95rem;">
-              Temukan referensi dengan cepat melalui <em>Advanced Search</em>. Filter berdasarkan Judul, Abstrak, Penulis, Mata Kuliah, hingga Dosen Pembimbing.
-            </p>
-          </div>
-
-          <div style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem;">
-            <h3 style="color: #4f46e5; margin-top: 0;">🔒 Kontrol Privasi & Akses</h3>
-            <p style="font-size: 0.95rem;">
-              Pemilik karya memegang kendali penuh. Pilih status <strong>Public</strong> untuk berbagi, atau <strong>Private</strong> dengan mekanisme <em>Request Access</em> bagi dosen yang berkepentingan.
-            </p>
-          </div>
-
-          <div style="border: 1px solid #e5e7eb; padding: 1.5rem; border-radius: 0.5rem;">
-            <h3 style="color: #4f46e5; margin-top: 0;">👥 Kolaborasi Akademik</h3>
-            <p style="font-size: 0.95rem;">
-              Sistem peran khusus untuk <strong>Mahasiswa</strong> (mengelola portofolio) dan <strong>Dosen</strong> (memantau perkembangan, validasi proyek, dan pelacakan inovasi)[cite: 17].
-            </p>
-          </div>
-
-        </div>
-
-        <div style="margin-top: 4rem; text-align: center; font-size: 0.875rem; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 2rem;">
-          <p>Powered by Modern Tech Stack: React Frontend • FastAPI Backend • PostgreSQL • Dockerized Environment</p>
-        </div>
-
-      </section>
-    </div>
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      .app-loaded #loading { display: none; }
-      body { margin: 0; background-color: #ffffff; }
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+      * { font-family: 'Inter', sans-serif; }
     </style>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
 
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      window.addEventListener('load', function() {
-        setTimeout(function() { document.getElementById('loading').style.display = 'none'; }, 100);
-      });
-    </script>
   </body>
 </html>

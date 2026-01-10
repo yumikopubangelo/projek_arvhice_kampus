@@ -11,10 +11,22 @@ const UploadPage = () => {
     tags: '',
     assignment_type: '',
     privacy_level: 'private',
+    code_repo_url: '',
+    dataset_url: '',
+    video_url: '',
   });
-  const [pdfFile, setPdfFile] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [files, setFiles] = useState({
+    pdf: null,
+    codeZip: [],
+    dataset: [],
+    slides: [],
+    additional: []
+  });
+  const [status, setStatus] = useState({
+    loading: false,
+    error: null,
+    success: null,
+  });
   const navigate = useNavigate();
 
   const handleInputChange = (e) => {
@@ -25,44 +37,65 @@ const UploadPage = () => {
     });
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setPdfFile(file);
+  const handleFileChange = (fileType) => (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles(prev => ({
+      ...prev,
+      [fileType]: fileType === 'pdf' ? selectedFiles[0] : selectedFiles
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setStatus({ loading: true, error: null, success: null });
 
     try {
+      // 1. Validasi Frontend Sederhana
+      if (!files.pdf) {
+        throw new Error("PDF report is required.");
+      }
+      if (!formData.title || !formData.abstract || !formData.authors || !formData.assignment_type) {
+        throw new Error("Please fill in all required fields.");
+      }
+
+      // 2. Mempersiapkan data untuk dikirim
       const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('abstract', formData.abstract);
-      submitData.append('authors', formData.authors);
-      submitData.append('year', formData.year.toString());
-      submitData.append('assignment_type', formData.assignment_type);
-      submitData.append('privacy_level', formData.privacy_level);
+      Object.keys(formData).forEach(key => {
+        if (formData[key]) {
+          submitData.append(key, formData[key]);
+        }
+      });
+      
+      submitData.append('pdf_file', files.pdf);
 
-      if (formData.tags) {
-        submitData.append('tags', formData.tags);
-      }
+      const supplementaryFiles = [
+        ...(files.codeZip || []),
+        ...(files.dataset || []),
+        ...(files.slides || []),
+        ...(files.additional || [])
+      ];
 
-      if (pdfFile) {
-        submitData.append('pdf_file', pdfFile);
-      }
+      supplementaryFiles.forEach(file => {
+        submitData.append('supplementary_files', file);
+      });
 
+      // 3. Melakukan panggilan API
       await api.post('/projects/', submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      navigate('/dashboard');
+      // 4. Menangani keberhasilan
+      setStatus({ loading: false, error: null, success: 'Project uploaded successfully! Redirecting to dashboard...' });
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to upload project');
-    } finally {
-      setLoading(false);
+      // 5. Menangani error
+      const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload project. Please try again.';
+      setStatus({ loading: false, error: errorMessage, success: null });
     }
   };
 
@@ -71,6 +104,20 @@ const UploadPage = () => {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-6">Upload Project</h1>
+
+          {/* Status Messages */}
+          {status.error && (
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+              <p className="font-bold">Error!</p>
+              <p>{status.error}</p>
+            </div>
+          )}
+          {status.success && (
+            <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+              <p className="font-bold">Success!</p>
+              <p>{status.success}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -182,34 +229,136 @@ const UploadPage = () => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="public">Public</option>
                 <option value="private">Private</option>
-                <option value="restricted">Restricted</option>
+                <option value="advisor">Advisor</option>
+                <option value="class">Class</option>
+                <option value="public">Public</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="files" className="block text-sm font-medium text-gray-700">
-                Files
+              <label htmlFor="code_repo_url" className="block text-sm font-medium text-gray-700">
+                Code Repository URL
+              </label>
+              <input
+                type="url"
+                id="code_repo_url"
+                name="code_repo_url"
+                value={formData.code_repo_url}
+                onChange={handleInputChange}
+                placeholder="https://github.com/username/repo"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="dataset_url" className="block text-sm font-medium text-gray-700">
+                Dataset URL
+              </label>
+              <input
+                type="url"
+                id="dataset_url"
+                name="dataset_url"
+                value={formData.dataset_url}
+                onChange={handleInputChange}
+                placeholder="https://example.com/dataset"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="video_url" className="block text-sm font-medium text-gray-700">
+                Demo Video URL
+              </label>
+              <input
+                type="url"
+                id="video_url"
+                name="video_url"
+                value={formData.video_url}
+                onChange={handleInputChange}
+                placeholder="https://youtube.com/watch?v=..."
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                PDF Report *
               </label>
               <input
                 type="file"
-                id="files"
-                multiple
-                accept=".pdf,.zip,.docx,.pptx"
-                onChange={handleFileChange}
+                accept=".pdf"
+                onChange={handleFileChange('pdf')}
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Supported formats: PDF, ZIP, DOCX, PPTX
+                Required: PDF report (max 10MB)
               </p>
             </div>
 
-            {error && (
-              <div className="text-red-600 text-sm">
-                {error}
-              </div>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Code Files
+              </label>
+              <input
+                type="file"
+                accept=".zip,.py,.ipynb,.r,.sql,.md"
+                multiple
+                onChange={handleFileChange('codeZip')}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Optional: Code files (ZIP, Python, Jupyter, R, SQL, Markdown) - max 20MB each
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Dataset Files
+              </label>
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls,.json,.txt"
+                multiple
+                onChange={handleFileChange('dataset')}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Optional: Dataset files (CSV, Excel, JSON, TXT) - max 15MB each
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Presentation Slides
+              </label>
+              <input
+                type="file"
+                accept=".pptx,.ppt"
+                multiple
+                onChange={handleFileChange('slides')}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Optional: PowerPoint files - max 10MB each
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Additional Files
+              </label>
+              <input
+                type="file"
+                accept=".pdf,.docx,.doc,.txt,.csv,.xlsx,.xls,.zip,.rar,.tar.gz,.py,.ipynb,.r,.sql,.md,.pptx,.ppt"
+                multiple
+                onChange={handleFileChange('additional')}
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Optional: Any additional files (documents, images, archives, etc.) - max 20MB each
+              </p>
+            </div>
 
             <div className="flex justify-end space-x-3">
               <button
@@ -221,10 +370,10 @@ const UploadPage = () => {
               </button>
               <button
                 type="submit"
-                disabled={loading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+                disabled={status.loading || status.success}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Uploading...' : 'Upload Project'}
+                {status.loading ? 'Uploading...' : 'Upload Project'}
               </button>
             </div>
           </form>

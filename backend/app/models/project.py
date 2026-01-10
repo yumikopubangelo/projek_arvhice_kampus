@@ -113,11 +113,17 @@ class Project(Base):
         nullable=True,
         comment="Link to dataset (if publicly available)"
     )
-    
+
+    video_url = Column(
+        String(500),
+        nullable=True,
+        comment="YouTube link to demo video"
+    )
+
     supplementary_files = Column(
         ARRAY(String),
         nullable=True,
-        comment="Additional file paths (images, data, etc.)"
+        comment="Additional file paths (code ZIP, slides, datasets, etc.)"
     )
     
     # =====================================================
