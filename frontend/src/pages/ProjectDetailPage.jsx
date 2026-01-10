@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/client';
@@ -11,8 +11,13 @@ const ProjectDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
-    fetchProject();
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchProject();
+    }
   }, [projectId]);
 
   const fetchProject = async () => {
@@ -44,6 +49,28 @@ const ProjectDetailPage = () => {
     if (project.advisor_id === user.id) return true;
 
     return false;
+  };
+
+  const handleDownloadFile = async (file, e) => {
+    e.preventDefault();
+    try {
+      const response = await api.get(`/files/${file.id}/download`, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', file.original_filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
+    }
   };
 
   if (loading) {
@@ -219,23 +246,29 @@ const ProjectDetailPage = () => {
             {/* Full Content Access */}
             {hasFullAccess && (
               <>
-                {/* PDF Download */}
-                {project.pdf_file_path && (
+                {/* Project Files */}
+                {project.files && project.files.length > 0 && (
                   <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">File Proyek</h3>
-                    <a
-                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/files/${project.id}/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                    >
-                      📄 Unduh PDF ({project.pdf_file_size ? `${(project.pdf_file_size / 1024 / 1024).toFixed(1)}MB` : 'Ukuran tidak diketahui'})
-                    </a>
+                    <div className="space-y-2">
+                      {project.files.map((file) => (
+                        <button
+                          key={file.id}
+                          onClick={(e) => handleDownloadFile(file, e)}
+                          className={`block w-full text-left px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-md hover:bg-gray-50 ${
+                            file.file_type === 'main_report' ? 'bg-red-50 border-red-200' : ''
+                          }`}
+                        >
+                          {file.file_type === 'main_report' ? '📄' : '📎'} {file.original_filename}
+                          {file.file_size && ` (${(file.file_size / 1024 / 1024).toFixed(1)}MB)`}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
                 {/* Links */}
-                {(project.code_repo_url || project.dataset_url) && (
+                {(project.code_repo_url || project.dataset_url || project.video_url) && (
                   <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Tautan</h3>
                     <div className="space-y-2">
@@ -259,30 +292,16 @@ const ProjectDetailPage = () => {
                           📊 Dataset
                         </a>
                       )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Supplementary Files */}
-                {project.supplementary_files && project.supplementary_files.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">File Tambahan</h3>
-                    <div className="space-y-2">
-                      {project.supplementary_files.map((filePath, index) => {
-                        // Extract filename from path (e.g., "1/supp_uuid_file.pdf" -> "supp_uuid_file.pdf")
-                        const filename = filePath.split('/').pop();
-                        return (
-                          <a
-                            key={index}
-                            href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/files/${project.id}/supplementary/${filename}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block px-3 py-2 text-gray-600 hover:text-gray-800 border border-gray-200 rounded-md hover:bg-gray-50"
-                          >
-                            📎 {filename}
-                          </a>
-                        );
-                      })}
+                      {project.video_url && (
+                        <a
+                          href={project.video_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block px-3 py-2 text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md hover:bg-indigo-50"
+                        >
+                          🎥 Video Demo
+                        </a>
+                      )}
                     </div>
                   </div>
                 )}

@@ -61,6 +61,28 @@ const ProjectCard = ({ project, onClick, user, onDelete }) => {
 
   const isOwner = user?.id === project.uploaded_by;
 
+  const handleDownloadFile = async (file, e) => {
+    e.preventDefault();
+    try {
+      const response = await api.get(`/files/${file.id}/download`, {
+        responseType: 'blob',
+      });
+
+      // Create a blob URL and trigger download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', file.original_filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
+
   return (
     <>
       <div
@@ -119,12 +141,13 @@ const ProjectCard = ({ project, onClick, user, onDelete }) => {
                 {files.map((file) => (
                   <li key={file.id} className="flex items-center justify-between group">
                     <a
-                      href={`/api/files/${file.id}/download`}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate pr-2"
-                      onClick={(e) => e.stopPropagation()}
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDownloadFile(file, e);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate pr-2 cursor-pointer"
                     >
                       {file.original_filename}
                     </a>

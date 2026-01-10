@@ -45,7 +45,8 @@ class ProjectService:
     @staticmethod
     def get_project_by_id(db: Session, project_id: int) -> Optional[Project]:
         """Get project by ID"""
-        return db.query(Project).filter(Project.id == project_id).first()
+        from sqlalchemy.orm import joinedload
+        return db.query(Project).options(joinedload(Project.files)).filter(Project.id == project_id).first()
 
     @staticmethod
     def get_projects(
@@ -166,7 +167,8 @@ class ProjectService:
     @staticmethod
     def get_user_projects(db: Session, user_id: int) -> List[Project]:
         """Get all projects uploaded by a user"""
-        return db.query(Project).filter(Project.uploaded_by == user_id).all()
+        from sqlalchemy.orm import joinedload
+        return db.query(Project).options(joinedload(Project.files)).filter(Project.uploaded_by == user_id).all()
 
     @staticmethod
     def get_advisor_projects(db: Session, advisor_id: int) -> List[Project]:

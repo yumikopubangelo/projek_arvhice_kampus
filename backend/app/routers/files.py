@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
@@ -40,8 +41,8 @@ def download_project_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to download this file")
 
     # Construct the full path to the file on disk
-    file_path = settings.UPLOAD_DIR / db_file.saved_path
-    if not file_path.exists():
+    file_path = os.path.join(settings.UPLOAD_DIR, db_file.saved_path)
+    if not os.path.exists(file_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found on disk. It may have been moved or deleted.")
 
     # Increment download count if the user is not the owner

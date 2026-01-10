@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # FILE UPLOAD
     # =====================================================
     UPLOAD_DIR: str = "uploads"
-    MAX_UPLOAD_SIZE_MB: int = 10
+    MAX_UPLOAD_SIZE_MB: int = 300
 
     # =====================================================
     # ENCRYPTION
