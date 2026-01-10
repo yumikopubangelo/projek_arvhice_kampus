@@ -8,12 +8,12 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 |----------|-------------|--------------|----------------|------------|
 | Authentication | 5 | 5 | 0 | 0 |
 | Project Management | 8 | 7 | 1 | 0 |
-| File Management | 6 | 4 | 0 | 2 |
+| File Management | 7 | 6 | 0 | 1 |
 | Search & Discovery | 5 | 4 | 0 | 1 |
 | Access Control | 4 | 4 | 0 | 0 |
-| User Interface | 8 | 7 | 0 | 1 |
+| User Interface | 9 | 8 | 0 | 1 |
 | System Features | 6 | 2 | 0 | 4 |
-| **TOTAL** | **42** | **33** | **1** | **8** |
+| **TOTAL** | **44** | **36** | **1** | **7** |
 
 ---
 
@@ -144,15 +144,22 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 - **Description**: Store file paths in database
 - **Implementation**: Relative paths from upload directory
 
+#### 5. File Download
+- **Status**: ✅ Completed
+- **Description**: Download project files (main and supplementary)
+- **Backend**: GET /files/{file_id}/download
+- **Features**: Access control based on project privacy
+
+#### 6. File Deletion
+- **Status**: ✅ Completed
+- **Description**: Delete supplementary files from the UI
+- **Frontend**: Delete button on ProjectCard.jsx
+- **Backend**: DELETE /files/{file_id}
+- **Features**: Owner-only permission, custom confirmation modal
+
 ### 📋 Planned Features
 
-#### 5. File Download
-- **Status**: 📋 Planned
-- **Description**: Download project files
-- **Backend**: GET /files/{project_id}/pdf, GET /files/{project_id}/supplementary/{filename}
-- **Features**: Access control, download tracking
-
-#### 6. File Preview
+#### 7. File Preview
 - **Status**: 📋 Planned
 - **Description**: Preview files in browser
 - **Features**: PDF viewer, image preview
@@ -259,9 +266,14 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 - **Description**: Responsive navigation bar
 - **Frontend**: Navbar.jsx
 
+#### 8. Custom Confirmation Modals
+- **Status**: ✅ Completed
+- **Description**: Reusable modal for confirming destructive actions like deletion.
+- **Frontend**: ConfirmationModal.jsx
+
 ### 📋 Planned Features
 
-#### 8. Admin Panel
+#### 9. Admin Panel
 - **Status**: 📋 Planned
 - **Description**: Administrative interface
 - **Features**: User management, system statistics

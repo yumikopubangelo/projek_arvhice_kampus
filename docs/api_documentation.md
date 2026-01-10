@@ -454,8 +454,10 @@ Cek status akses user saat ini untuk proyek tertentu.
 
 ## 📄 Files Endpoints
 
-### GET /files/{project_id}/pdf
-Download file PDF proyek.
+Endpoint untuk mengelola file yang terasosiasi dengan proyek.
+
+### GET /files/project/{project_id}
+Dapatkan daftar semua record file yang terhubung dengan sebuah proyek.
 
 **Headers:**
 ```
@@ -463,20 +465,67 @@ Authorization: Bearer <token>
 ```
 
 **Path Parameters:**
-- `project_id`: integer (required)
+- `project_id`: integer (required) - ID proyek yang ingin diperiksa.
 
-**Response:** File PDF download
-
+**Response (200):**
+Array berisi informasi file.
+```json
+[
+  {
+    "id": 101,
+    "original_filename": "main_report.pdf",
+    "file_type": "main_report",
+    "file_size": 1234567,
+    "mime_type": "application/pdf"
+  },
+  {
+    "id": 102,
+    "original_filename": "dataset.zip",
+    "file_type": "supplementary",
+    "file_size": 7890123,
+    "mime_type": "application/zip"
+  }
+]
+```
 **Error Responses:**
-- `403`: Tidak memiliki akses download
-- `404`: File tidak ditemukan
+- `403`: Tidak memiliki izin untuk melihat file proyek ini.
+- `404`: Proyek tidak ditemukan.
 
-### GET /files/{project_id}/supplementary/{filename}
-Download file supplementary.
+### GET /files/{file_id}/download
+Download sebuah file spesifik (baik file utama maupun tambahan).
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
 
 **Path Parameters:**
-- `project_id`: integer (required)
-- `filename`: string (required)
+- `file_id`: integer (required) - ID unik dari file yang akan diunduh.
+
+**Response:**
+- `200`: File stream untuk diunduh, dengan `Content-Disposition` header yang sesuai.
+
+**Error Responses:**
+- `403`: Tidak memiliki izin untuk mengunduh file ini.
+- `404`: File tidak ditemukan di database atau di disk.
+
+### DELETE /files/{file_id}
+Hapus sebuah file tambahan (supplementary file).
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Path Parameters:**
+- `file_id`: integer (required) - ID unik dari file yang akan dihapus.
+
+**Response:**
+- `204`: No Content - File berhasil dihapus.
+
+**Error Responses:**
+- `403`: Anda bukan pemilik proyek dan tidak diizinkan menghapus file.
+- `404`: File tidak ditemukan.
 
 ---
 

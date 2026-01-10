@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProjects } from '../hooks/useProjects';
 import ProjectCard from '../components/ProjectCard';
 import ProjectEditModal from '../components/ProjectEditModal';
+import ConfirmationModal from '../components/ConfirmationModal'; // Import the modal
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -13,6 +14,11 @@ const DashboardPage = () => {
   const [error, setError] = useState('');
   const [editingProject, setEditingProject] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // State for delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -20,28 +26,15 @@ const DashboardPage = () => {
 
   const fetchProjects = async () => {
     try {
-      console.log('📥 Fetching projects...');
-
       setLoading(true);
       setError('');
-
-      let result;
-      if (user?.role === 'student') {
-        // Students see their own projects
-        result = await getMyProjects();
-      } else {
-        // Others see all projects
-        result = await getProjects();
-      }
-
+      const result = user?.role === 'student' ? await getMyProjects() : await getProjects();
       if (result.success) {
-        console.log('✅ Projects loaded:', result.data);
         setProjects(result.data);
       } else {
         setError(result.error);
       }
     } catch (err) {
-      console.error('❌ Failed to load projects:', err);
       setError('Failed to load projects');
     } finally {
       setLoading(false);
@@ -49,12 +42,10 @@ const DashboardPage = () => {
   };
 
   const handleProjectClick = (project) => {
-    // Only allow editing if user is the owner and is a student
     if (user?.role === 'student' && user?.id === project.uploaded_by) {
       setEditingProject(project);
       setShowEditModal(true);
     } else {
-      // For others, navigate to project detail
       window.location.href = `/projects/${project.id}`;
     }
   };
@@ -63,20 +54,31 @@ const DashboardPage = () => {
     setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
   };
 
-  const handleProjectDelete = async (project) => {
-    if (window.confirm(`Are you sure you want to delete "${project.title}"? This action cannot be undone.`)) {
-      try {
-        const result = await deleteProject(project.id);
-        if (result.success) {
-          // Remove the project from the local state
-          setProjects(projects.filter(p => p.id !== project.id));
-        } else {
-          setError(result.error);
-        }
-      } catch (err) {
-        console.error('Failed to delete project:', err);
-        setError('Failed to delete project');
+  // Step 1: Open confirmation modal
+  const handleProjectDelete = (project) => {
+    setDeletingProject(project);
+    setShowDeleteConfirm(true);
+  };
+
+  // Step 2: Confirm deletion and execute
+  const confirmProjectDelete = async () => {
+    if (!deletingProject) return;
+
+    setIsDeleting(true);
+    setError('');
+    try {
+      const result = await deleteProject(deletingProject.id);
+      if (result.success) {
+        setProjects(projects.filter(p => p.id !== deletingProject.id));
+        setShowDeleteConfirm(false);
+        setDeletingProject(null);
+      } else {
+        setError(result.error);
       }
+    } catch (err) {
+      setError('Failed to delete project');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -88,26 +90,9 @@ const DashboardPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button 
-            onClick={fetchProjects}
-            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -124,8 +109,9 @@ const DashboardPage = () => {
           )}
         </div>
 
-        {/* Projects Grid */}
-        {projects.length === 0 ? (
+        {error && <p className="text-red-600 mb-4">{error}</p>}
+        
+        {projects.length === 0 && !loading ? (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No projects found.</p>
             {user?.role === 'student' && (
@@ -151,16 +137,23 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* Edit Modal */}
         <ProjectEditModal
           project={editingProject}
           isOpen={showEditModal}
           onClose={() => setShowEditModal(false)}
           onUpdate={handleProjectUpdate}
         />
+
+        <ConfirmationModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmProjectDelete}
+          title="Confirm Project Deletion"
+          message={`Are you sure you want to delete the project "${deletingProject?.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          loading={isDeleting}
+        />
       </div>
     </div>
   );
 };
-
-export default DashboardPage;

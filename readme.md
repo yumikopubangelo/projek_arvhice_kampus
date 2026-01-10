@@ -57,6 +57,7 @@ Campus Archive Platform adalah sistem manajemen arsip digital yang dirancang khu
 - **File Validation**: Type checking, size limits (PDF: 10MB, others: various)
 - **Unique Filenames**: UUID generation mencegah konflik nama file
 - **Secure Upload**: Comprehensive validation dan error handling
+- **File Deletion from UI**: Hapus file tambahan langsung dari project card (owner only)
 - **PDF Downloads**: Download file PDF dengan tracking jumlah download *(planned)*
 - **Supplementary Files**: Upload dan download file tambahan (gambar, data, dll.) *(planned)*
 - **Secure Access**: Kontrol akses file berdasarkan permission dan privacy level
@@ -79,6 +80,7 @@ Campus Archive Platform adalah sistem manajemen arsip digital yang dirancang khu
 - **Protected Routes**: Sistem routing dengan autentikasi
 - **Project Cards**: Display proyek dengan informasi lengkap
 - **Modal Editing**: Edit project tanpa navigasi halaman
+- **Custom Confirmation Modals**: Dialog konfirmasi kustom untuk aksi destruktif (seperti delete)
 
 ### 🛠 Technical Features ✅
 - **REST API**: Backend FastAPI dengan dokumentasi API otomatis
@@ -234,10 +236,10 @@ campus-archive/
 │   │   │   ├── Navbar.jsx          # Navigation bar
 │   │   │   ├── ProjectCard.jsx     # Project display card
 │   │   │   ├── ProjectEditModal.jsx # Edit project modal
+│   │   │   ├── ConfirmationModal.jsx # Custom confirmation dialog
 │   │   │   ├── FileUpload.jsx      # File upload component
 │   │   │   ├── ProtectedRoute.jsx  # Route protection
 │   │   │   ├── SearchBar.jsx       # Search component
-│   │   │   └── __init__.js
 │   │   ├── pages/          # Page components
 │   │   │   ├── LandingPage.jsx    # Welcome page
 │   │   │   ├── LoginPage.jsx      # Login form
@@ -290,6 +292,9 @@ campus-archive/
 - [`TODO.md`](TODO.md) - Current development tasks & known issues
 
 ### Recent Updates (January 2026)
+- ✅ **File Deletion**: Pengguna sekarang dapat menghapus file tambahan langsung dari kartu proyek.
+- ✅ **Custom Confirmation Modals**: Mengganti dialog browser bawaan dengan modal konfirmasi kustom untuk pengalaman pengguna yang lebih baik dan lebih aman saat menghapus.
+- ✅ **Bug Fixes**: Memperbaiki bug kritis pada penanganan error saat upload file dan pembaruan proyek.
 - ✅ **File Upload Enhancement**: Files now automatically stored in user-specific folders (`uploads/{user_id}/`)
 - ✅ **User-Specific Storage**: Each user gets dedicated folder with unique filenames (UUID)
 - ✅ **Enhanced Error Handling**: Improved Pydantic validation error display in frontend
