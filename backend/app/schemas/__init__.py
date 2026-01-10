@@ -16,6 +16,7 @@ from app.schemas.access_request import (
     AccessRequestRead, AccessRequestUpdate, AccessRequestRespond,
     AccessRequestSummary
 )
+from app.schemas.file import ProjectFile, ProjectFileBase, ProjectFileCreate
 
 # Export all schemas for easy import
 __all__ = [
@@ -29,5 +30,8 @@ __all__ = [
     # Access request schemas
     "AccessRequestStatus", "AccessRequestBase", "AccessRequestCreate",
     "AccessRequestRead", "AccessRequestUpdate", "AccessRequestRespond",
-    "AccessRequestSummary"
+    "AccessRequestSummary",
+
+    # File schemas
+    "ProjectFile", "ProjectFileBase", "ProjectFileCreate",
 ]

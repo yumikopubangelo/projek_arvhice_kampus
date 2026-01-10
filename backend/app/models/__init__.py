@@ -8,6 +8,7 @@ before Alembic runs migrations.
 from app.models.user import User
 from app.models.project import Project, PrivacyLevel, ProjectStatus
 from app.models.access_request import AccessRequest, AccessRequestStatus
+from app.models.file import ProjectFile, FileType
 
 # Export all models for easy import
 __all__ = [
@@ -17,4 +18,6 @@ __all__ = [
     "PrivacyLevel",
     "ProjectStatus",
     "AccessRequestStatus",
+    "ProjectFile",
+    "FileType",
 ]

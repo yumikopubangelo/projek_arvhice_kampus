@@ -19,9 +19,16 @@ class ProjectService:
     @staticmethod
     def create_project(db: Session, project_data: ProjectCreate, uploader_id: int) -> Project:
         """Create a new project"""
+        project_dict = project_data.model_dump()
+
+        # Manually convert Pydantic HttpUrl objects to strings for DB compatibility
+        for field in ['code_repo_url', 'dataset_url', 'video_url']:
+            if project_dict.get(field):
+                project_dict[field] = str(project_dict[field])
+
         # Create project instance
         project = Project(
-            **project_data.model_dump(),
+            **project_dict,
             uploaded_by=uploader_id,
             status=ProjectStatus.ONGOING
         )
@@ -108,8 +115,13 @@ class ProjectService:
                 detail="You can only update your own projects"
             )
 
-        # Update fields
         update_dict = update_data.model_dump(exclude_unset=True)
+        
+        # Manually convert Pydantic HttpUrl objects to strings for DB compatibility
+        for field in ['code_repo_url', 'dataset_url', 'video_url']:
+            if field in update_dict and update_dict.get(field):
+                update_dict[field] = str(update_dict[field])
+
         for key, value in update_dict.items():
             setattr(project, key, value)
 

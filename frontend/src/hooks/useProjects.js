@@ -41,7 +41,16 @@ const useProjects = () => {
       });
       return { success: true, data: response.data };
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to create project';
+      let errorMessage = 'Failed to create project';
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map(e => `${e.loc.join('.')} - ${e.msg}`).join('; ');
+        } else if (typeof err.response.data.detail === 'object') {
+          errorMessage = JSON.stringify(err.response.data.detail);
+        } else {
+          errorMessage = err.response.data.detail;
+        }
+      }
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -54,12 +63,20 @@ const useProjects = () => {
     try {
       // Check if projectData is FormData (for file uploads)
       const isFormData = projectData instanceof FormData;
-      const response = await api.put(`/projects/${projectId}`, projectData, {
+      const response = await api.post(`/projects/${projectId}`, projectData, {
         headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : {}
       });
       return { success: true, data: response.data };
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to update project';
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (Array.isArray(err.response.data.detail)) {
+          errorMessage = err.response.data.detail.map(e => `${e.loc.join('.')} - ${e.msg}`).join('; ');
+        } else if (typeof err.response.data.detail === 'object') {
+          errorMessage = JSON.stringify(err.response.data.detail);
+        } else {
+          errorMessage = err.response.data.detail;
+        }
+      }
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {

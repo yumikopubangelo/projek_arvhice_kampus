@@ -3,6 +3,11 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
+# Import the new schema for related files
+from .file import ProjectFile
+# Import the schema for nested user objects
+from .user import UserRead
+
 
 # =====================================================
 # ENUMS (MIRRORING MODEL ENUMS)
@@ -70,12 +75,10 @@ class ProjectRead(ProjectBase):
     id: int
     abstract_preview: Optional[str] = None
     status: ProjectStatus
-    pdf_file_path: Optional[str] = None
-    pdf_file_size: Optional[int] = None
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
     video_url: Optional[HttpUrl] = None
-    supplementary_files: List[str] = Field(default_factory=list)
+    file_name: Optional[str] = None
     uploaded_by: int
     advisor_id: Optional[int] = None
     view_count: int
@@ -83,9 +86,12 @@ class ProjectRead(ProjectBase):
     created_at: datetime
     updated_at: datetime
 
+    # New field for related files
+    files: List[ProjectFile] = []
+
     # Related data (optional, populated by service layer)
-    uploader: Optional[dict] = None  # Simplified user info
-    advisor: Optional[dict] = None   # Simplified user info
+    uploader: Optional[UserRead] = None
+    advisor: Optional[UserRead] = None
 
     model_config = ConfigDict(from_attributes=True, json_schema_extra={
         "example": {
@@ -101,26 +107,36 @@ class ProjectRead(ProjectBase):
             "course_code": "CS101",
             "status": "ongoing",
             "privacy_level": "private",
-            "pdf_file_path": "/uploads/projects/1/project.pdf",
-            "pdf_file_size": 2048576,
             "code_repo_url": "https://github.com/johndoe/ml-student-analysis",
             "dataset_url": "https://example.com/dataset.csv",
-            "supplementary_files": ["/uploads/projects/1/data.csv", "/uploads/projects/1/results.png"],
             "uploaded_by": 1,
             "advisor_id": 2,
             "view_count": 15,
             "download_count": 3,
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z",
+            "files": [
+                {
+                    "id": 101,
+                    "original_filename": "final_report.pdf",
+                    "saved_path": "uploads/xyz/abc.pdf",
+                    "file_type": "main_report",
+                    "mime_type": "application/pdf",
+                    "file_size": 2048576,
+                    "created_at": "2024-01-01T00:00:00Z"
+                }
+            ],
             "uploader": {
                 "id": 1,
+                "email": "john@university.edu",
                 "full_name": "John Doe",
-                "email": "john@university.edu"
+                "role": "student"
             },
             "advisor": {
                 "id": 2,
+                "email": "jane@university.edu",
                 "full_name": "Dr. Jane Smith",
-                "email": "jane@university.edu"
+                "role": "dosen"
             }
         }
     })
@@ -141,6 +157,7 @@ class ProjectUpdate(BaseModel):
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
     video_url: Optional[HttpUrl] = None
+    file_name: Optional[str] = None
 
     model_config = ConfigDict(json_schema_extra={
         "example": {

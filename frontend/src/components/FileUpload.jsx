@@ -13,6 +13,7 @@ const FileUpload = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const fileInputRef = useRef(null);
 
   const validateFile = (file) => {
@@ -32,9 +33,12 @@ const FileUpload = ({
 
   const handleFileSelect = async (event) => {
     const selectedFiles = Array.from(event.target.files);
-    setError('');
+    if (selectedFiles.length === 0) return;
 
-    // Validate files
+    setError('');
+    setSuccess('');
+
+    // Validate files before creating FormData
     for (const file of selectedFiles) {
       const validationError = validateFile(file);
       if (validationError) {
@@ -43,64 +47,68 @@ const FileUpload = ({
       }
     }
 
-    // Check total file count
     if (files.length + selectedFiles.length > maxFiles) {
-      setError(`Maximum ${maxFiles} files allowed`);
+      setError(`Cannot upload ${selectedFiles.length} file(s). Maximum of ${maxFiles} files allowed.`);
       return;
     }
 
     setUploading(true);
+    const formData = new FormData();
+    selectedFiles.forEach(file => {
+      formData.append('files', file); // The backend expects a list of files under the key 'files'
+    });
 
     try {
-      const newFiles = [];
+      const response = await api.post(`/projects/${projectId}/files`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          // Simple progress for the whole batch
+          setUploadProgress({ batch: percentCompleted });
+        }
+      });
 
-      for (const file of selectedFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
-
-        const response = await api.post(`/files/${projectId}/supplementary`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            setUploadProgress(prev => ({ ...prev, [file.name]: percentCompleted }));
-          }
-        });
-
-        newFiles.push({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          uploaded: true,
-          path: response.data.path
-        });
-      }
+      // The response.data should be an array of the newly created file objects
+      const newFiles = response.data.map(f => ({
+        id: f.id, // Make sure to use the ID from the backend response
+        name: f.original_filename,
+        size: f.file_size,
+        path: f.saved_path,
+        uploaded: true,
+      }));
 
       const updatedFiles = [...files, ...newFiles];
       setFiles(updatedFiles);
-      onFilesChange(updatedFiles);
+      if (onFilesChange) {
+        onFilesChange(updatedFiles);
+      }
+
+      const uploadedCount = newFiles.length;
+      setSuccess(`${uploadedCount} file${uploadedCount > 1 ? 's' : ''} uploaded successfully!`);
 
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to upload files');
     } finally {
       setUploading(false);
       setUploadProgress({});
-      // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  const handleDeleteFile = async (fileName) => {
+  const handleDeleteFile = async (fileId) => {
     try {
-      await api.delete(`/files/${projectId}/supplementary/${fileName}`);
-      const updatedFiles = files.filter(file => file.name !== fileName);
+      // Use the new, correct endpoint for deleting a file by its ID
+      await api.delete(`/files/${fileId}`);
+      const updatedFiles = files.filter(file => file.id !== fileId);
       setFiles(updatedFiles);
-      onFilesChange(updatedFiles);
+      if (onFilesChange) {
+        onFilesChange(updatedFiles);
+      }
+      setSuccess('File deleted successfully.');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to delete file');
     }
@@ -160,7 +168,13 @@ const FileUpload = ({
 
       {error && (
         <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md">
-          {error}
+          {typeof error === 'string' ? error : JSON.stringify(error)}
+        </div>
+      )}
+
+      {success && (
+        <div className="text-green-600 text-sm bg-green-50 p-3 rounded-md">
+          {success}
         </div>
       )}
 
@@ -188,7 +202,7 @@ const FileUpload = ({
                     </div>
                   )}
                   <button
-                    onClick={() => handleDeleteFile(file.name)}
+                    onClick={() => handleDeleteFile(file.id)}
                     className="text-red-600 hover:text-red-800 text-sm"
                     disabled={uploading}
                   >

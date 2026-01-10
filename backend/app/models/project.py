@@ -1,8 +1,12 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, ARRAY, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
+
 from app.database import Base
+# Import the new ProjectFile model to establish the relationship
+from .file import ProjectFile
 
 
 class PrivacyLevel(str, enum.Enum):
@@ -91,16 +95,8 @@ class Project(Base):
     # =====================================================
     # PRIVATE CONTENT (Controlled by privacy_level)
     # =====================================================
-    pdf_file_path = Column(
-        String(500),
-        nullable=True,
-        comment="Path to uploaded PDF file"
-    )
-    pdf_file_size = Column(
-        Integer,
-        nullable=True,
-        comment="File size in bytes"
-    )
+    # DEPRECATED: pdf_file_path, pdf_file_size, supplementary_files
+    # These are now handled by the ProjectFile model
     
     code_repo_url = Column(
         String(500),
@@ -120,12 +116,6 @@ class Project(Base):
         comment="YouTube link to demo video"
     )
 
-    supplementary_files = Column(
-        ARRAY(String),
-        nullable=True,
-        comment="Additional file paths (code ZIP, slides, datasets, etc.)"
-    )
-    
     # =====================================================
     # RELATIONSHIPS (Foreign Keys)
     # =====================================================
@@ -176,6 +166,14 @@ class Project(Base):
         cascade="all, delete-orphan"
     )
 
+    # New relationship to ProjectFile
+    files = relationship(
+        "ProjectFile",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        lazy="joined"  # Use 'joined' to load files with the project
+    )
+
     def __repr__(self):
         return f"<Project(id={self.id}, title='{self.title[:50]}...', year={self.year})>"
     
@@ -186,8 +184,8 @@ class Project(Base):
     
     @property
     def has_file(self) -> bool:
-        """Check if project has uploaded PDF"""
-        return self.pdf_file_path is not None
+        """Check if project has any associated files"""
+        return self.files and len(self.files) > 0
     
     def can_access(self, user_id: int, user_role: str) -> bool:
         """

@@ -49,12 +49,12 @@ try:
     # Set target metadata for Alembic
     target_metadata = Base.metadata
     
-    print(f"✅ Successfully imported {len(target_metadata.tables)} tables:")
+    print(f"Successfully imported {len(target_metadata.tables)} tables:")
     for table_name in target_metadata.tables.keys():
         print(f"   - {table_name}")
 
 except ImportError as e:
-    print(f"❌ ERROR: Failed to import models: {e}")
+    print(f"ERROR: Failed to import models: {e}")
     print(f"   BASE_DIR: {BASE_DIR}")
     print(f"   sys.path: {sys.path}")
     raise
@@ -65,20 +65,10 @@ except ImportError as e:
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError(
-        "❌ DATABASE_URL environment variable is not set!\n"
-        "   Please create a .env file with DATABASE_URL or set it in your environment.\n"
-        "   Example: DATABASE_URL=postgresql://user:pass@localhost:5432/dbname"
-    )
+    # Use SQLite for local development
+    DATABASE_URL = "sqlite:///./campus_archive.db"
 
-# Validate DATABASE_URL format
-if not DATABASE_URL.startswith("postgresql"):
-    raise ValueError(
-        f"❌ Invalid DATABASE_URL: {DATABASE_URL}\n"
-        "   Must start with 'postgresql://' or 'postgresql+psycopg2://'"
-    )
-
-print(f"✅ Database URL configured: {DATABASE_URL.split('@')[0]}@***")
+print(f"Database URL configured: {DATABASE_URL}")
 
 # Set in Alembic config
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
@@ -146,10 +136,10 @@ def run_migrations_online():
 # MAIN EXECUTION
 # =====================================================
 if context.is_offline_mode():
-    print("🔄 Running migrations in OFFLINE mode...")
+    print("Running migrations in OFFLINE mode...")
     run_migrations_offline()
 else:
-    print("🔄 Running migrations in ONLINE mode...")
+    print("Running migrations in ONLINE mode...")
     run_migrations_online()
 
-print("✅ Migration completed successfully!")
+print("Migration completed successfully!")

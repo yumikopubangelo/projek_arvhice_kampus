@@ -69,61 +69,44 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
     setLoading(true);
 
     try {
-      // Check if we need to send multipart form data (for file uploads)
-      const hasFiles = pdfFile !== null;
+      const formDataToSend = new FormData();
 
-      if (hasFiles) {
-        // Send as multipart form data
-        const formDataToSend = new FormData();
-
-        // Add form fields
-        formDataToSend.append('title', formData.title);
-        formDataToSend.append('abstract', formData.abstract);
-        formDataToSend.append('authors', formData.authors);
-        formDataToSend.append('tags', formData.tags);
-        formDataToSend.append('year', formData.year.toString());
-        formDataToSend.append('assignment_type', formData.assignment_type);
-        formDataToSend.append('semester', formData.semester);
-        formDataToSend.append('class_name', formData.class_name);
-        formDataToSend.append('course_code', formData.course_code);
-        formDataToSend.append('privacy_level', formData.privacy_level);
-
-        if (formData.code_repo_url) formDataToSend.append('code_repo_url', formData.code_repo_url);
-        if (formData.dataset_url) formDataToSend.append('dataset_url', formData.dataset_url);
-        if (formData.video_url) formDataToSend.append('video_url', formData.video_url);
-
-        // Add PDF file if selected
-        if (pdfFile) {
-          formDataToSend.append('pdf_file', pdfFile);
+      // Append all text-based form fields
+      Object.keys(formData).forEach(key => {
+        // Ensure not to send null/undefined, but allow empty strings
+        if (formData[key] !== null && formData[key] !== undefined) {
+            formDataToSend.append(key, formData[key]);
         }
-
-        // Note: supplementary files are handled separately via FileUpload component
-
-        const result = await updateProject(project.id, formDataToSend);
-        if (result.success) {
-          onUpdate(result.data);
-          onClose();
-        } else {
-          setError(result.error);
-        }
-      } else {
-        // Send as JSON
-        const updateData = {
-          ...formData,
-          authors: formData.authors.split(',').map(a => a.trim()).filter(a => a),
-          tags: formData.tags.split(',').map(t => t.trim()).filter(t => t)
-        };
-
-        const result = await updateProject(project.id, updateData);
-        if (result.success) {
-          onUpdate(result.data);
-          onClose();
-        } else {
-          setError(result.error);
-        }
+      });
+      
+      // Append the new PDF file if one was selected
+      if (pdfFile) {
+        formDataToSend.append('pdf_file', pdfFile);
       }
+
+      // Filter out already existing files and append only new ones
+      const newSupplementaryFiles = supplementaryFiles.filter(file => !file.uploaded);
+      if (newSupplementaryFiles.length > 0) {
+        newSupplementaryFiles.forEach(fileObject => {
+          // The actual file is often stored in a 'file' property or is the object itself
+          const file = fileObject.file || fileObject;
+          formDataToSend.append('supplementary_files', file);
+        });
+      }
+
+      // Call the update function from the hook
+      const result = await updateProject(project.id, formDataToSend);
+
+      if (result.success) {
+        onUpdate(result.data); // Propagate update to parent component
+        onClose(); // Close the modal
+      } else {
+        setError(result.error || 'An unknown error occurred.');
+      }
+
     } catch (err) {
-      setError('Failed to update project');
+      console.error("Update project error:", err);
+      setError(err.response?.data?.detail || err.message || 'Failed to update project.');
     } finally {
       setLoading(false);
     }
@@ -371,7 +354,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           {error && (
             <div className="text-red-600 text-sm">
-              {error}
+              {typeof error === 'string' ? error : JSON.stringify(error)}
             </div>
           )}
 

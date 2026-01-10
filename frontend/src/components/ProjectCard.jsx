@@ -74,6 +74,30 @@ const ProjectCard = ({ project, onClick, user, onDelete }) => {
         ))}
       </div>
 
+      {/* Files List */}
+      {project.files && project.files.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-700 mb-2">Attached Files:</h4>
+          <ul className="space-y-2">
+            {project.files.map((file) => (
+              <li key={file.id} className="flex items-center">
+                <a
+                  href={`/api/files/${file.id}/download`}
+                  download
+                  target="_blank" // Open in new tab to start download
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline text-sm truncate"
+                  // Prevent card click handler from firing when clicking the file link
+                  onClick={(e) => e.stopPropagation()} 
+                >
+                  {file.original_filename}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Delete button for owners */}
       {isOwner && (
         <div className="mt-4 pt-4 border-t border-gray-200">

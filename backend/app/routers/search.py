@@ -7,7 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.project import Project, PrivacyLevel
 from app.schemas.project import ProjectSummary, ProjectSearch
-from app.routers.auth import get_current_user
+from app.dependencies.dependencies import get_current_user_optional
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -29,7 +29,7 @@ async def search_projects(
     course_code: Optional[str] = Query(None, description="Filter by course code"),
     skip: int = Query(0, ge=0, description="Number of results to skip"),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of results to return"),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -133,7 +133,7 @@ async def search_projects(
 async def get_search_suggestions(
     q: str = Query(..., min_length=1, description="Partial search query"),
     limit: int = Query(10, ge=1, le=50, description="Maximum number of suggestions"),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -181,7 +181,7 @@ async def get_search_suggestions(
 # =====================================================
 @router.get("/filters")
 async def get_search_filters(
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -228,7 +228,7 @@ async def get_search_filters(
 @router.post("/advanced", response_model=List[ProjectSummary])
 async def advanced_search(
     search_params: ProjectSearch,
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -256,7 +256,7 @@ async def advanced_search(
 @router.get("/popular-tags")
 async def get_popular_tags(
     limit: int = Query(20, ge=1, le=100, description="Number of tags to return"),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """

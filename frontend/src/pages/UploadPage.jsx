@@ -66,7 +66,7 @@ const UploadPage = () => {
         }
       });
       
-      submitData.append('pdf_file', files.pdf);
+      submitData.append('main_file', files.pdf);
 
       const supplementaryFiles = [
         ...(files.codeZip || []),
@@ -94,7 +94,10 @@ const UploadPage = () => {
 
     } catch (err) {
       // 5. Menangani error
-      const errorMessage = err.response?.data?.detail || err.message || 'Failed to upload project. Please try again.';
+      let errorMessage = err.response?.data?.detail || err.message || 'Failed to upload project. Please try again.';
+      if (typeof errorMessage === 'object') {
+        errorMessage = JSON.stringify(errorMessage);
+      }
       setStatus({ loading: false, error: errorMessage, success: null });
     }
   };

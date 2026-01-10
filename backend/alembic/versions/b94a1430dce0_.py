@@ -18,7 +18,9 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    pass
+    # Add file_name column to projects table
+    op.add_column('projects', sa.Column('file_name', sa.String(length=255), nullable=True, comment='Name of the main file'))
 
 def downgrade() -> None:
-    pass
+    # Remove file_name column from projects table
+    op.drop_column('projects', 'file_name')

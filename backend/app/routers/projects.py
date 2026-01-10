@@ -1,87 +1,19 @@
-import os
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Body
+from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from app.database import get_db
-from app.models.user import User
-from app.models.project import Project, PrivacyLevel, ProjectStatus
-from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
-from app.routers.auth import get_current_user
-from app.services.file_service import save_project_file, save_supplementary_file, validate_file_extension, validate_total_size, ALLOWED_EXTENSIONS, delete_project_files, delete_file
-from app.utils.encryption import decrypt_sensitive_fields
-from app.config import get_settings
-
-settings = get_settings()
-
-def get_file_info(file_paths):
-    """
-    Get file information including sizes for a list of file paths
-    """
-    file_info = []
-    for path in file_paths:
-        if path:
-            full_path = os.path.join(settings.UPLOAD_DIR, path)
-            if os.path.exists(full_path):
-                size = os.path.getsize(full_path)
-                filename = os.path.basename(path)
-                file_info.append({
-                    'path': path,
-                    'name': filename,
-                    'size': size
-                })
-            else:
-                # File doesn't exist, still include with size 0
-                filename = os.path.basename(path)
-                file_info.append({
-                    'path': path,
-                    'name': filename,
-                    'size': 0
-                })
-    return file_info
-
-def format_project_response(project, include_private=True):
-    """
-    Format project for API response with file information
-    """
-    project_dict = project.__dict__.copy()
-    project_dict.pop('_sa_instance_state', None)
-
-    # Ensure supplementary_files is a list
-    if project_dict.get('supplementary_files') is None:
-        project_dict['supplementary_files'] = []
-
-    # Add file information with sizes
-    if include_private and project_dict['supplementary_files']:
-        project_dict['supplementary_files_info'] = get_file_info(project_dict['supplementary_files'])
-    else:
-        project_dict['supplementary_files_info'] = []
-
-    # Format uploader as dict
-    if hasattr(project, 'uploader') and project.uploader:
-        project_dict['uploader'] = {
-            'id': project.uploader.id,
-            'uuid': project.uploader.uuid,
-            'full_name': project.uploader.full_name,
-            'email': project.uploader.email
-        }
-    else:
-        project_dict['uploader'] = None
-
-    return project_dict
+from app.models import User, Project, FileType
+from app.schemas import ProjectCreate, ProjectRead, ProjectUpdate, ProjectFile as ProjectFileSchema, ProjectStatus, PrivacyLevel
+from app.dependencies.dependencies import get_current_active_user
+from app.services import ProjectService, FileService
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
 
-
-# =====================================================
-# CREATE PROJECT
-# =====================================================
-@router.post("/", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
-async def create_project(
-    # Form data
+# Dependency to parse form data into a Pydantic model
+def get_project_create_form(
     title: str = Form(...),
-    abstract: str = Form(...),
+    abstract: Optional[str] = Form(None),
     authors: str = Form(...),  # Comma-separated
     tags: str = Form(...),     # Comma-separated
     year: int = Form(...),
@@ -93,36 +25,13 @@ async def create_project(
     code_repo_url: Optional[str] = Form(None),
     dataset_url: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
-    advisor_id: Optional[int] = Form(None),
-    # File uploads
-    pdf_file: UploadFile = File(...),
-    supplementary_files: List[UploadFile] = File([]),
-    # Auth & DB
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Create new project (students only)
-    """
-    # Only students can create projects
-    if current_user.role != "student":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only students can upload projects"
-        )
+) -> ProjectCreate:
+    authors_list = [a.strip() for a in authors.split(",") if a.strip()]
+    tags_list = [t.strip() for t in tags.split(",") if t.strip()]
     
-    # Parse authors and tags
-    authors_list = [a.strip() for a in authors.split(",")]
-    tags_list = [t.strip() for t in tags.split(",")]
-    
-    # Create abstract preview (first 300 chars)
-    abstract_preview = abstract[:300] + "..." if len(abstract) > 300 else abstract
-    
-    # Create project in DB first (to get ID for file storage)
-    new_project = Project(
+    return ProjectCreate(
         title=title,
         abstract=abstract,
-        abstract_preview=abstract_preview,
         authors=authors_list,
         tags=tags_list,
         year=year,
@@ -130,197 +39,13 @@ async def create_project(
         class_name=class_name,
         course_code=course_code,
         assignment_type=assignment_type,
-        status=ProjectStatus.ONGOING,
-        privacy_level=PrivacyLevel(privacy_level),
+        privacy_level=privacy_level,
         code_repo_url=code_repo_url,
         dataset_url=dataset_url,
-        video_url=video_url,
-        uploaded_by=current_user.id,
-        advisor_id=advisor_id
+        video_url=video_url
     )
-    
-    db.add(new_project)
-    db.commit()
-    db.refresh(new_project)
 
-    # Save files first, then validate total size
-    saved_files = []
-
-    try:
-        # Save PDF file (mandatory)
-        pdf_path, pdf_size = await save_project_file(pdf_file, current_user.uuid)
-        new_project.pdf_file_path = pdf_path
-        new_project.pdf_file_size = pdf_size
-        saved_files.append(pdf_path)
-
-        # Save supplementary files
-        supp_paths = []
-        total_supp_size = 0
-
-        if supplementary_files:
-            for upload_file in supplementary_files:
-                # Validate file extension
-                all_allowed = []
-                for ext_list in ALLOWED_EXTENSIONS.values():
-                    all_allowed.extend(ext_list)
-                validate_file_extension(upload_file.filename, all_allowed)
-
-                path, size = await save_supplementary_file(upload_file, current_user.uuid)
-                supp_paths.append(path)
-                saved_files.append(path)
-                total_supp_size += size
-
-        # Validate total size
-        total_size = pdf_size + total_supp_size
-        validate_total_size(total_size)
-
-        new_project.supplementary_files = supp_paths
-        db.commit()
-
-    except Exception as e:
-        # If validation fails or any error occurs, delete saved files
-        for file_path in saved_files:
-            delete_file(file_path)
-        raise e
-
-    # Load the project with relationships for proper serialization
-    project = db.query(Project).options(
-        joinedload(Project.uploader)
-    ).filter(Project.id == new_project.id).first()
-
-    # Format project for response
-    return format_project_response(project, include_private=True)
-
-
-# =====================================================
-# GET ALL PROJECTS (WITH FILTERS)
-# =====================================================
-@router.get("", response_model=List[ProjectRead])
-async def get_projects(
-    year: Optional[int] = None,
-    tag: Optional[str] = None,
-    privacy_level: Optional[str] = None,
-    skip: int = 0,
-    limit: int = 20,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Get all projects (filtered by access permissions)
-    """
-    query = db.query(Project).options(
-        # Eager load uploader relationship
-        joinedload(Project.uploader)
-    ).join(Project.uploader)
-
-    # Apply filters
-    if year:
-        query = query.filter(Project.year == year)
-
-    if tag:
-        # Case-insensitive partial match in tags
-        from sqlalchemy import func
-        query = query.filter(
-            func.array_to_string(Project.tags, ' ').ilike(f'%{tag}%')
-        )
-
-    if privacy_level:
-        query = query.filter(Project.privacy_level == privacy_level)
-
-    # Filter by access permissions
-    # TODO: Implement proper access control based on privacy levels
-
-    projects = query.offset(skip).limit(limit).all()
-
-    # Format projects for response
-    formatted_projects = []
-    for project in projects:
-        # Check if user can access this project
-        if not project.can_access(current_user.id, current_user.role):
-            continue
-
-        # Check if user can access full content
-        can_access_full = project.can_access_full_content(current_user.id, current_user.role)
-
-        # Format project with file info
-        project_dict = format_project_response(project, include_private=can_access_full)
-
-        # Hide private content if user cannot access full content
-        if not can_access_full:
-            project_dict['pdf_file_path'] = None
-            project_dict['pdf_file_size'] = None
-            project_dict['supplementary_files'] = []
-            project_dict['supplementary_files_info'] = []
-            project_dict['code_repo_url'] = None
-            project_dict['dataset_url'] = None
-
-        formatted_projects.append(project_dict)
-
-    return formatted_projects
-
-
-# =====================================================
-# GET SINGLE PROJECT
-# =====================================================
-@router.get("/{project_id}", response_model=ProjectRead)
-async def get_project(
-    project_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Get project by ID
-    """
-    project = db.query(Project).filter(Project.id == project_id).first()
-
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-
-    # Load uploader
-    uploader = db.query(User).filter(User.id == project.uploaded_by).first()
-    project.uploader = uploader
-
-    # Check access permissions
-    if not project.can_access(current_user.id, current_user.role):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to access this project"
-        )
-
-    # Check if user can access full content
-    can_access_full = project.can_access_full_content(current_user.id, current_user.role)
-
-    # Increment view count
-    project.view_count += 1
-    db.commit()
-    db.refresh(project)  # Refresh to get updated values
-
-    # Format project with file info
-    project_dict = format_project_response(project, include_private=can_access_full)
-
-    # Hide private content if user cannot access full content
-    if not can_access_full:
-        project_dict['pdf_file_path'] = None
-        project_dict['pdf_file_size'] = None
-        project_dict['supplementary_files'] = []
-        project_dict['supplementary_files_info'] = []
-        project_dict['code_repo_url'] = None
-        project_dict['dataset_url'] = None
-
-    return project_dict
-
-
-# =====================================================
-# UPDATE PROJECT
-# =====================================================
-@router.put("/{project_id}", response_model=ProjectRead)
-@router.patch("/{project_id}", response_model=ProjectRead)  # Also support PATCH
-async def update_project(
-    project_id: int,
-    # Form data for file uploads
+def get_project_update_form(
     title: Optional[str] = Form(None),
     abstract: Optional[str] = Form(None),
     authors: Optional[str] = Form(None),  # Comma-separated
@@ -330,216 +55,199 @@ async def update_project(
     class_name: Optional[str] = Form(None),
     course_code: Optional[str] = Form(None),
     assignment_type: Optional[str] = Form(None),
-    privacy_level: Optional[str] = Form(None),
+    status: Optional[ProjectStatus] = Form(None),
+    privacy_level: Optional[PrivacyLevel] = Form(None),
     code_repo_url: Optional[str] = Form(None),
     dataset_url: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
-    advisor_id: Optional[int] = Form(None),
-    # File uploads
-    pdf_file: Optional[UploadFile] = File(None),
-    supplementary_files: Optional[List[UploadFile]] = File([]),
-    # Auth & DB
-    current_user: User = Depends(get_current_user),
+) -> ProjectUpdate:
+    update_data = {
+        "title": title,
+        "abstract": abstract,
+        "year": year,
+        "semester": semester,
+        "class_name": class_name,
+        "course_code": course_code,
+        "assignment_type": assignment_type,
+        "status": status,
+        "privacy_level": privacy_level,
+        "code_repo_url": code_repo_url,
+        "dataset_url": dataset_url,
+        "video_url": video_url,
+    }
+
+    if authors is not None:
+        update_data["authors"] = [a.strip() for a in authors.split(",") if a.strip()]
+    
+    if tags is not None:
+        update_data["tags"] = [t.strip() for t in tags.split(",") if t.strip()]
+
+    # Filter out None values so they don't overwrite existing fields with null
+    return ProjectUpdate(**{k: v for k, v in update_data.items() if v is not None})
+
+@router.post("/", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
+async def create_project(
+    project_data: ProjectCreate = Depends(get_project_create_form),
+    main_file: UploadFile = File(...),
+    supplementary_files: List[UploadFile] = File([]),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
-    Update project (owner only) - supports both JSON and multipart form data
+    Create a new project with a main file and optional supplementary files.
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
+    if current_user.role != "student":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only students can upload projects")
 
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-
-    # Only owner can update
-    if project.uploaded_by != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only update your own projects"
-        )
-
-    # Prepare update data
-    update_data = {}
-
-    # Handle form fields
-    if title is not None:
-        update_data['title'] = title
-    if abstract is not None:
-        update_data['abstract'] = abstract
-    if authors is not None:
-        update_data['authors'] = [a.strip() for a in authors.split(",")]
-    if tags is not None:
-        update_data['tags'] = [t.strip() for t in tags.split(",")]
-    if year is not None:
-        update_data['year'] = year
-    if semester is not None:
-        update_data['semester'] = semester
-    if class_name is not None:
-        update_data['class_name'] = class_name
-    if course_code is not None:
-        update_data['course_code'] = course_code
-    if assignment_type is not None:
-        update_data['assignment_type'] = assignment_type
-    if privacy_level is not None:
-        update_data['privacy_level'] = PrivacyLevel(privacy_level)
-    if code_repo_url is not None:
-        update_data['code_repo_url'] = code_repo_url if code_repo_url else None
-    if dataset_url is not None:
-        update_data['dataset_url'] = dataset_url if dataset_url else None
-    if video_url is not None:
-        update_data['video_url'] = video_url if video_url else None
-    if advisor_id is not None:
-        update_data['advisor_id'] = advisor_id
-
-    # Handle file uploads
-    saved_files = []
-
+    # Create the project entry first
+    project = ProjectService.create_project(db, project_data=project_data, uploader_id=current_user.id)
+    
     try:
-        # Handle PDF file upload
-        if pdf_file is not None:
-            # Delete old PDF file if exists
-            if project.pdf_file_path:
-                delete_file(project.pdf_file_path)
+        # Handle the main file (renamed from pdf_file for clarity)
+        await FileService.create_project_file_record(
+            db=db,
+            project_id=project.id,
+            user_uuid=current_user.uuid,
+            upload_file=main_file,
+            file_type=FileType.MAIN_REPORT
+        )
 
-            pdf_path, pdf_size = await save_project_file(pdf_file, current_user.uuid)
-            update_data['pdf_file_path'] = pdf_path
-            update_data['pdf_file_size'] = pdf_size
-            saved_files.append(pdf_path)
-
-        # Handle supplementary files upload
-        if supplementary_files:
-            # Validate extensions
-            all_allowed = []
-            for ext_list in ALLOWED_EXTENSIONS.values():
-                all_allowed.extend(ext_list)
-
-            new_supp_paths = []
-            for upload_file in supplementary_files:
-                validate_file_extension(upload_file.filename, all_allowed)
-                path, _ = await save_supplementary_file(upload_file, current_user.uuid)
-                new_supp_paths.append(path)
-                saved_files.append(path)
-
-            # Merge with existing supplementary files
-            existing_supp = project.supplementary_files or []
-            update_data['supplementary_files'] = existing_supp + new_supp_paths
-
-        # Validate total size if files were uploaded
-        if saved_files:
-            total_size = 0
-            if 'pdf_file_size' in update_data:
-                total_size += update_data['pdf_file_size']
-
-            # Calculate size of all supplementary files
-            all_supp_files = update_data.get('supplementary_files', project.supplementary_files or [])
-            for file_path in all_supp_files:
-                file_info = get_file_info(file_path)
-                if file_info:
-                    total_size += file_info['size']
-
-            validate_total_size(total_size)
-
-        # Apply updates
-        for key, value in update_data.items():
-            setattr(project, key, value)
-
-        # Update abstract preview if abstract changed
-        if 'abstract' in update_data:
-            project.abstract_preview = update_data['abstract'][:300] + "..." if len(update_data['abstract']) > 300 else update_data['abstract']
-
+        # Handle supplementary files
+        for sup_file in supplementary_files:
+            if sup_file.filename: # Ensure file is not empty
+                await FileService.create_project_file_record(
+                    db=db,
+                    project_id=project.id,
+                    user_uuid=current_user.uuid,
+                    upload_file=sup_file,
+                    file_type=FileType.SUPPLEMENTARY
+                )
+        
         db.commit()
         db.refresh(project)
 
     except Exception as e:
-        # If any error occurs, delete newly saved files
-        for file_path in saved_files:
-            delete_file(file_path)
-        raise e
+        db.rollback()
+        # Note: File cleanup on disk might be needed if something goes wrong
+        # For simplicity, we are not implementing that here, but in production, it would be important.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred during file upload: {str(e)}"
+        )
+        
+    return project
 
-    # Load the project with relationships for proper serialization
-    updated_project = db.query(Project).options(
-        joinedload(Project.uploader)
-    ).filter(Project.id == project.id).first()
-
-    # Format project for response
-    return format_project_response(updated_project, include_private=True)
-
-
-# =====================================================
-# DELETE PROJECT
-# =====================================================
-@router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_project(
+@router.post("/{project_id}/files", response_model=List[ProjectFileSchema])
+async def upload_project_files(
     project_id: int,
-    current_user: User = Depends(get_current_user),
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
-    Delete project (owner only)
+    Upload one or more supplementary files to an existing project.
     """
-    project = db.query(Project).filter(Project.id == project_id).first()
-    
+    project = ProjectService.get_project_by_id(db, project_id)
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Project not found"
-        )
-    
-    # Only owner can delete
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    # Only the project owner can upload more files
     if project.uploaded_by != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to add files to this project")
+
+    created_files = []
+    try:
+        for file in files:
+            if file.filename:
+                new_file_record = await FileService.create_project_file_record(
+                    db=db,
+                    project_id=project.id,
+                    user_uuid=current_user.uuid,
+                    upload_file=file,
+                    file_type=FileType.SUPPLEMENTARY
+                )
+                created_files.append(new_file_record)
+        
+        db.commit()
+        for f in created_files:
+            db.refresh(f)
+
+    except Exception as e:
+        db.rollback()
+        # Basic cleanup of files that might have been saved before the error
+        # A more robust implementation would track and delete them.
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You can only delete your own projects"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred during file upload: {str(e)}"
         )
+        
+    return created_files
 
-    # Collect file paths to delete
-    file_paths = []
-    if project.pdf_file_path:
-        file_paths.append(project.pdf_file_path)
-    if project.supplementary_files:
-        file_paths.extend(project.supplementary_files)
-
-    # Delete project from DB
-    db.delete(project)
-    db.commit()
-
-    # Delete associated files
-    if file_paths:
-        delete_project_files(file_paths)
-
-    return None
-
-
-# =====================================================
-# GET MY PROJECTS (CURRENT USER)
-# =====================================================
 @router.get("/me/projects", response_model=List[ProjectRead])
-async def get_my_projects(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+def get_my_projects(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get all projects uploaded by the current user."""
+    return ProjectService.get_user_projects(db, user_id=current_user.id)
+
+@router.get("/{project_id}", response_model=ProjectRead)
+def get_project(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Get a single project by its ID."""
+    project = ProjectService.get_project_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
+
+    # Check access rights
+    if not project.can_access(user_id=current_user.id, user_role=current_user.role):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to view this project")
+
+    # Increment view count if the user is not the owner
+    if project.uploaded_by != current_user.id:
+        ProjectService.increment_view_count(db, project=project)
+
+    return project
+
+@router.post("/{project_id}", response_model=ProjectRead)
+async def update_project(
+    project_id: int,
+    project_update: ProjectUpdate = Depends(get_project_update_form),
+    pdf_file: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
-    Get all projects uploaded by current user
+    Update a project's metadata and optionally replace its main file.
     """
-    projects = db.query(Project).filter(
-        Project.uploaded_by == current_user.id
-    ).all()
+    project = ProjectService.get_project_by_id(db, project_id)
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    # Format projects for response
-    formatted_projects = []
-    for project in projects:
-        # Format project with file info (owner can see all)
-        project_dict = format_project_response(project, include_private=True)
+    # Update metadata
+    updated_project = ProjectService.update_project(db, project=project, update_data=project_update, user_id=current_user.id)
 
-        # Override uploader with current user info
-        project_dict['uploader'] = {
-            'id': current_user.id,
-            'full_name': current_user.full_name,
-            'email': current_user.email
-        }
+    try:
+        # Handle new PDF file if provided
+        if pdf_file and pdf_file.filename:
+            await FileService.replace_main_report(
+                db=db,
+                project=project,
+                user_uuid=current_user.uuid,
+                new_file=pdf_file
+            )
+        
+        db.commit()
+        db.refresh(updated_project)
 
-        formatted_projects.append(project_dict)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred during file update: {str(e)}"
+        )
 
-    return formatted_projects
+    return updated_project

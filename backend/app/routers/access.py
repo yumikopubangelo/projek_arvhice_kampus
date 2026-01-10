@@ -11,7 +11,7 @@ from app.schemas.access_request import (
     AccessRequestCreate, AccessRequestRead, AccessRequestUpdate,
     AccessRequestRespond, AccessRequestSummary
 )
-from app.routers.auth import get_current_user
+from app.dependencies.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/access", tags=["Access Requests"])
 
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/access", tags=["Access Requests"])
 @router.post("/", response_model=AccessRequestRead, status_code=status.HTTP_201_CREATED)
 async def create_access_request(
     request_data: AccessRequestCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -95,7 +95,7 @@ async def create_access_request(
 @router.get("/my-requests", response_model=List[AccessRequestSummary])
 async def get_my_access_requests(
     status_filter: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -123,7 +123,7 @@ async def get_my_access_requests(
 @router.get("/for-my-projects", response_model=List[AccessRequestSummary])
 async def get_requests_for_my_projects(
     status_filter: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -158,7 +158,7 @@ async def get_requests_for_my_projects(
 @router.get("/{request_id}", response_model=AccessRequestRead)
 async def get_access_request(
     request_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -195,7 +195,7 @@ async def get_access_request(
 async def respond_to_access_request(
     request_id: int,
     response_data: AccessRequestRespond,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -252,7 +252,7 @@ async def respond_to_access_request(
 @router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_access_request(
     request_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -292,7 +292,7 @@ async def cancel_access_request(
 @router.get("/check/{project_id}")
 async def check_access_status(
     project_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     """

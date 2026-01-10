@@ -1,9 +1,8 @@
 # imports
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from jose import jwt
 
 from app.database import get_db
 from app.config import get_settings
@@ -11,10 +10,10 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserRead, Token
 from app.utils.password import hash_password, verify_password
 from app.utils.encryption import decrypt_sensitive_fields
+from app.dependencies.dependencies import get_current_active_user # Import the centralized dependency
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 settings = get_settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # =====================================================
 # REGISTER ENDPOINT
@@ -165,49 +164,12 @@ def create_access_token(user_id: int, role: str) -> str:
     token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token
 
-
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-) -> User:
-    """
-    Dependency to get current authenticated user from JWT token
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
-
-        if user_id is None:
-            raise credentials_exception
-
-        print(f"🔍 Token validated for user_id: {user_id}")
-
-    except JWTError as e:
-        print(f"❌ JWT Error: {e}")
-        raise credentials_exception
-
-    user = db.query(User).filter(User.id == int(user_id)).first()
-
-    if user is None:
-        print(f"❌ User not found for id: {user_id}")
-        raise credentials_exception
-
-    print(f"✅ Current user: {user.email}")
-    return user
-
-
 # =====================================================
 # GET CURRENT USER (PROFILE)
 # =====================================================
 @router.get("/me", response_model=UserRead)
 async def get_current_user_profile(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get current logged-in user profile

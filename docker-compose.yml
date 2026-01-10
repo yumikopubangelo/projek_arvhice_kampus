@@ -67,8 +67,8 @@ services:
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost
     
     volumes:
-      - upload_data:/app/uploads
-      # Mount code untuk hot reload di development
+      # Mount code for hot reload in development & link uploads folder
+      - ./uploads:/app/uploads
       - ./backend/app:/app/app
       - ./backend/alembic:/app/alembic
     
@@ -191,10 +191,7 @@ services:
 volumes:
   postgres_data:
     driver: local
-  
-  upload_data:
-    driver: local
-  
+
   pgadmin_data:
     driver: local
 
