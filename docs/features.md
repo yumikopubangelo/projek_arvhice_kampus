@@ -7,13 +7,14 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 | Kategori | Total Fitur | ✅ Completed | 🔄 In Progress | 📋 Planned |
 |----------|-------------|--------------|----------------|------------|
 | Authentication | 5 | 5 | 0 | 0 |
-| Project Management | 8 | 7 | 1 | 0 |
-| File Management | 7 | 6 | 0 | 1 |
+| Project Management | 9 | 8 | 1 | 0 |
+| Course Management | 6 | 6 | 0 | 0 |
+| File Management | 6 | 5 | 0 | 1 |
 | Search & Discovery | 5 | 4 | 0 | 1 |
 | Access Control | 4 | 4 | 0 | 0 |
-| User Interface | 9 | 8 | 0 | 1 |
+| User Interface | 10 | 9 | 0 | 1 |
 | System Features | 6 | 2 | 0 | 4 |
-| **TOTAL** | **44** | **36** | **1** | **7** |
+| **TOTAL** | **51** | **43** | **1** | **7** |
 
 ---
 
@@ -108,12 +109,63 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 - **Implementation**: uploads/{user_id}/ structure
 - **Features**: Unique filenames, validation, error handling
 
+#### 8. Supplementary Files Upload
+- **Status**: ✅ Completed
+- **Description**: Upload multiple additional files with projects
+- **Features**: Multiple file types, size validation, storage
+
+#### 9. Advisor Assignment
+- **Status**: ✅ Completed
+- **Description**: Assign lecturer advisors to projects
+- **Features**: Advisor selection, permission levels
+
 ### 🔄 In Progress Features
 
-#### 8. Project Statistics
+#### 10. Project Statistics
 - **Status**: 🔄 In Progress
 - **Description**: View count, download count tracking
 - **Implementation**: Database fields exist, UI needed
+
+---
+
+## 📚 Course Management Features
+
+### ✅ Completed Features
+
+#### 1. Course Creation
+- **Status**: ✅ Completed
+- **Description**: Dosen dapat membuat mata kuliah dengan kode unik per semester
+- **Features**: Form validation, unique course code per semester
+- **Frontend**: CourseForm.jsx (assumed)
+- **Backend**: POST /courses
+
+#### 2. Course Management
+- **Status**: ✅ Completed
+- **Description**: CRUD operations untuk mata kuliah (create, read, update, delete)
+- **Features**: Ownership check, lecturer-only access
+- **Backend**: GET/PUT/DELETE /courses/{id}
+
+#### 3. Lecturer Dashboard
+- **Status**: ✅ Completed
+- **Description**: Interface khusus dosen untuk mengelola mata kuliah
+- **Features**: List courses by lecturer, semester filtering
+- **Backend**: GET /courses
+
+#### 4. Course Association
+- **Status**: ✅ Completed
+- **Description**: Proyek dapat dihubungkan dengan mata kuliah tertentu
+- **Features**: Course selection in project upload form
+- **Implementation**: Foreign key to course in project model
+
+#### 5. Validation
+- **Status**: ✅ Completed
+- **Description**: Mencegah duplikasi kode kursus dalam semester yang sama
+- **Features**: Database constraints, error handling
+
+#### 6. Auto-suggestions
+- **Status**: ✅ Completed
+- **Description**: Sistem dapat mendeteksi dan mengsugestikan nama dosen dari akun terdaftar
+- **Features**: Lecturer name auto-complete from existing users
 
 ---
 
@@ -148,7 +200,7 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 - **Status**: ✅ Completed
 - **Description**: Download project files (main and supplementary)
 - **Backend**: GET /files/{file_id}/download
-- **Features**: Access control based on project privacy
+- **Features**: Access control based on project privacy, download tracking
 
 #### 6. File Deletion
 - **Status**: ✅ Completed
@@ -271,9 +323,15 @@ Dokumentasi lengkap fitur-fitur yang tersedia, telah diimplementasi, dan yang ma
 - **Description**: Reusable modal for confirming destructive actions like deletion.
 - **Frontend**: ConfirmationModal.jsx
 
+#### 9. Course Form
+- **Status**: ✅ Completed
+- **Description**: Form for lecturers to create and manage courses
+- **Frontend**: CourseForm.jsx
+- **Features**: Validation, semester/year selection
+
 ### 📋 Planned Features
 
-#### 9. Admin Panel
+#### 10. Admin Panel
 - **Status**: 📋 Planned
 - **Description**: Administrative interface
 - **Features**: User management, system statistics

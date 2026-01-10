@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import useCourses from '../hooks/useCourses';
 
 const UploadPage = () => {
+  const { courses } = useCourses();
   const [formData, setFormData] = useState({
     title: '',
     abstract: '',
@@ -10,6 +12,11 @@ const UploadPage = () => {
     year: new Date().getFullYear(),
     tags: '',
     assignment_type: '',
+    semester: '',
+    kelas: '',
+    course_code: '',
+    lecturer_name: '',
+    course_id: '',
     privacy_level: 'private',
     code_repo_url: '',
     dataset_url: '',
@@ -52,10 +59,10 @@ const UploadPage = () => {
     try {
       // 1. Validasi Frontend Sederhana
       if (!files.pdf) {
-        throw new Error("PDF report is required.");
+        throw new Error("Laporan PDF wajib diunggah.");
       }
       if (!formData.title || !formData.abstract || !formData.authors || !formData.assignment_type) {
-        throw new Error("Please fill in all required fields.");
+        throw new Error("Harap isi semua field yang wajib diisi.");
       }
 
       // 2. Mempersiapkan data untuk dikirim
@@ -87,14 +94,14 @@ const UploadPage = () => {
       });
 
       // 4. Menangani keberhasilan
-      setStatus({ loading: false, error: null, success: 'Project uploaded successfully! Redirecting to dashboard...' });
+      setStatus({ loading: false, error: null, success: 'Proyek berhasil diunggah! Mengalihkan ke dasbor...' });
       setTimeout(() => {
         navigate('/dashboard');
       }, 2000);
 
     } catch (err) {
       // 5. Menangani error
-      let errorMessage = err.response?.data?.detail || err.message || 'Failed to upload project. Please try again.';
+      let errorMessage = err.response?.data?.detail || err.message || 'Gagal mengunggah proyek. Silakan coba lagi.';
       if (typeof errorMessage === 'object') {
         errorMessage = JSON.stringify(errorMessage);
       }
@@ -106,7 +113,7 @@ const UploadPage = () => {
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Upload Project</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-6">Unggah Proyek</h1>
 
           {/* Status Messages */}
           {status.error && (
@@ -117,7 +124,7 @@ const UploadPage = () => {
           )}
           {status.success && (
             <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-              <p className="font-bold">Success!</p>
+              <p className="font-bold">Sukses!</p>
               <p>{status.success}</p>
             </div>
           )}
@@ -125,7 +132,7 @@ const UploadPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                Title *
+                Judul *
               </label>
               <input
                 type="text"
@@ -140,7 +147,7 @@ const UploadPage = () => {
 
             <div>
               <label htmlFor="abstract" className="block text-sm font-medium text-gray-700">
-                Abstract *
+                Abstrak *
               </label>
               <textarea
                 id="abstract"
@@ -155,7 +162,7 @@ const UploadPage = () => {
 
             <div>
               <label htmlFor="authors" className="block text-sm font-medium text-gray-700">
-                Authors (comma separated) *
+                Penulis (pisahkan dengan koma) *
               </label>
               <input
                 type="text"
@@ -164,14 +171,14 @@ const UploadPage = () => {
                 required
                 value={formData.authors}
                 onChange={handleInputChange}
-                placeholder="e.g. John Doe, Jane Smith"
+                placeholder="cth. John Doe, Jane Smith"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
               <label htmlFor="year" className="block text-sm font-medium text-gray-700">
-                Year *
+                Tahun *
               </label>
               <input
                 type="number"
@@ -185,10 +192,89 @@ const UploadPage = () => {
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
+            
+            <div>
+              <label htmlFor="semester" className="block text-sm font-medium text-gray-700">
+                Semester
+              </label>
+              <input
+                type="number"
+                id="semester"
+                name="semester"
+                value={formData.semester}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="kelas" className="block text-sm font-medium text-gray-700">
+                Kelas
+              </label>
+              <input
+                type="text"
+                id="kelas"
+                name="kelas"
+                value={formData.kelas}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="course_code" className="block text-sm font-medium text-gray-700">
+                Kode Mata Kuliah
+              </label>
+              <input
+                type="text"
+                id="course_code"
+                name="course_code"
+                value={formData.course_code}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="lecturer_name" className="block text-sm font-medium text-gray-700">
+                Nama Dosen
+              </label>
+              <input
+                type="text"
+                id="lecturer_name"
+                name="lecturer_name"
+                value={formData.lecturer_name}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="course_id" className="block text-sm font-medium text-gray-700">
+                Asosiasikan dengan Mata Kuliah (Opsional)
+              </label>
+              <select
+                id="course_id"
+                name="course_id"
+                value={formData.course_id}
+                onChange={handleInputChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              >
+                <option value="">Pilih mata kuliah (opsional)</option>
+                {courses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.course_code} - {course.course_name} ({course.semester} {course.year})
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Jika proyek ini terkait dengan mata kuliah tertentu
+              </p>
+            </div>
 
             <div>
               <label htmlFor="assignment_type" className="block text-sm font-medium text-gray-700">
-                Assignment Type *
+                Jenis Tugas *
               </label>
               <select
                 id="assignment_type"
@@ -198,7 +284,7 @@ const UploadPage = () => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Select assignment type</option>
+                <option value="">Pilih jenis tugas</option>
                 <option value="skripsi">Tugas Akhir/Skripsi</option>
                 <option value="tugas_matkul">Tugas Mata Kuliah</option>
                 <option value="laporan_kp">Laporan Kerja Praktik</option>
@@ -208,7 +294,7 @@ const UploadPage = () => {
 
             <div>
               <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-                Tags (comma separated)
+                Tags (pisahkan dengan koma)
               </label>
               <input
                 type="text"
@@ -216,14 +302,14 @@ const UploadPage = () => {
                 name="tags"
                 value={formData.tags}
                 onChange={handleInputChange}
-                placeholder="e.g. web development, react, api"
+                placeholder="cth. pengembangan web, react, api"
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
 
             <div>
               <label htmlFor="privacy_level" className="block text-sm font-medium text-gray-700">
-                Privacy Level
+                Tingkat Privasi
               </label>
               <select
                 id="privacy_level"
@@ -232,16 +318,16 @@ const UploadPage = () => {
                 onChange={handleInputChange}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="private">Private</option>
-                <option value="advisor">Advisor</option>
-                <option value="class">Class</option>
-                <option value="public">Public</option>
+                <option value="private">Pribadi</option>
+                <option value="advisor">Dosen Pembimbing</option>
+                <option value="class">Kelas</option>
+                <option value="public">Publik</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="code_repo_url" className="block text-sm font-medium text-gray-700">
-                Code Repository URL
+                URL Repositori Kode
               </label>
               <input
                 type="url"
@@ -256,7 +342,7 @@ const UploadPage = () => {
 
             <div>
               <label htmlFor="dataset_url" className="block text-sm font-medium text-gray-700">
-                Dataset URL
+                URL Dataset
               </label>
               <input
                 type="url"
@@ -271,7 +357,7 @@ const UploadPage = () => {
 
             <div>
               <label htmlFor="video_url" className="block text-sm font-medium text-gray-700">
-                Demo Video URL
+                URL Video Demo
               </label>
               <input
                 type="url"
@@ -286,7 +372,7 @@ const UploadPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                PDF Report *
+                Laporan PDF *
               </label>
               <input
                 type="file"
@@ -295,13 +381,13 @@ const UploadPage = () => {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Required: PDF report (max 10MB)
+                Wajib: Laporan PDF (maks 10MB)
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Code Files
+                File Kode
               </label>
               <input
                 type="file"
@@ -311,13 +397,13 @@ const UploadPage = () => {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Optional: Code files (ZIP, Python, Jupyter, R, SQL, Markdown) - max 20MB each
+                Opsional: File kode (ZIP, Python, Jupyter, R, SQL, Markdown) - maks 20MB per file
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Dataset Files
+                File Dataset
               </label>
               <input
                 type="file"
@@ -327,13 +413,13 @@ const UploadPage = () => {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Optional: Dataset files (CSV, Excel, JSON, TXT) - max 15MB each
+                Opsional: File dataset (CSV, Excel, JSON, TXT) - maks 15MB per file
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Presentation Slides
+                Slide Presentasi
               </label>
               <input
                 type="file"
@@ -343,13 +429,13 @@ const UploadPage = () => {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Optional: PowerPoint files - max 10MB each
+                Opsional: File PowerPoint - maks 10MB per file
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Additional Files
+                File Tambahan
               </label>
               <input
                 type="file"
@@ -359,7 +445,7 @@ const UploadPage = () => {
                 className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Optional: Any additional files (documents, images, archives, etc.) - max 20MB each
+                Opsional: File tambahan (dokumen, gambar, arsip, dll.) - maks 20MB per file
               </p>
             </div>
 
@@ -369,14 +455,14 @@ const UploadPage = () => {
                 onClick={() => navigate('/dashboard')}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                Cancel
+                Batal
               </button>
               <button
                 type="submit"
                 disabled={status.loading || status.success}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {status.loading ? 'Uploading...' : 'Upload Project'}
+                {status.loading ? 'Mengunggah...' : 'Unggah Proyek'}
               </button>
             </div>
           </form>

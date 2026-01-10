@@ -21,6 +21,7 @@ def get_project_create_form(
     class_name: Optional[str] = Form(None),
     course_code: Optional[str] = Form(None),
     assignment_type: Optional[str] = Form(None),
+    lecturer_name: Optional[str] = Form(None),
     privacy_level: str = Form(default="private"),
     code_repo_url: Optional[str] = Form(None),
     dataset_url: Optional[str] = Form(None),
@@ -39,6 +40,7 @@ def get_project_create_form(
         class_name=class_name,
         course_code=course_code,
         assignment_type=assignment_type,
+        lecturer_name=lecturer_name,
         privacy_level=privacy_level,
         code_repo_url=code_repo_url,
         dataset_url=dataset_url,
@@ -60,6 +62,7 @@ def get_project_update_form(
     code_repo_url: Optional[str] = Form(None),
     dataset_url: Optional[str] = Form(None),
     video_url: Optional[str] = Form(None),
+    lecturer_name: Optional[str] = Form(None),
 ) -> ProjectUpdate:
     update_data = {
         "title": title,
@@ -74,6 +77,7 @@ def get_project_update_form(
         "code_repo_url": code_repo_url,
         "dataset_url": dataset_url,
         "video_url": video_url,
+        "lecturer_name": lecturer_name,
     }
 
     if authors is not None:

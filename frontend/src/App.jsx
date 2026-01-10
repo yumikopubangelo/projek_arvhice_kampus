@@ -14,6 +14,7 @@ import DashboardPage from './pages/DashboardPage';
 import UploadPage from './pages/UploadPage';
 import SearchPage from './pages/SearchPage';
 import ProjectDetailPage from './pages/ProjectDetailPage';
+import CoursesPage from './pages/CoursesPage';
 
 function App() {
   return (
@@ -63,6 +64,14 @@ function App() {
                       element={
                         <ProtectedRoute>
                           <ProjectDetailPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="courses"
+                      element={
+                        <ProtectedRoute>
+                          <CoursesPage />
                         </ProtectedRoute>
                       }
                     />

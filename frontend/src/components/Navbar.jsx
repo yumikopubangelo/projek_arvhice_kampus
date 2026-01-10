@@ -54,6 +54,14 @@ const Navbar = () => {
                 >
                   Search
                 </Link>
+                {user.role === 'dosen' && (
+                  <Link
+                    to="/courses"
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Courses
+                  </Link>
+                )}
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-700 hidden lg:block">
                     Welcome, {user.full_name || user.email}
@@ -124,6 +132,15 @@ const Navbar = () => {
                   >
                     Search
                   </Link>
+                  {user.role === 'dosen' && (
+                    <Link
+                      to="/courses"
+                      onClick={closeMenu}
+                      className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    >
+                      Courses
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout();

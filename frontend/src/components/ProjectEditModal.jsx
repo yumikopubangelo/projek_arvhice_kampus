@@ -17,7 +17,8 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
     privacy_level: 'private',
     code_repo_url: '',
     dataset_url: '',
-    video_url: ''
+    video_url: '',
+    lecturer_name: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -41,7 +42,8 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
         privacy_level: project.privacy_level || 'private',
         code_repo_url: project.code_repo_url || '',
         dataset_url: project.dataset_url || '',
-        video_url: project.video_url || ''
+        video_url: project.video_url || '',
+        lecturer_name: project.lecturer_name || ''
       });
 
       // Initialize supplementary files with size information
@@ -118,7 +120,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Edit Project</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Edit Proyek</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -130,7 +132,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
+              Judul
             </label>
             <input
               type="text"
@@ -144,7 +146,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Abstract
+              Abstrak
             </label>
             <textarea
               name="abstract"
@@ -157,7 +159,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              PDF Report (Optional - leave empty to keep current)
+              Laporan PDF (Opsional - biarkan kosong untuk mempertahankan yang ada)
             </label>
             <input
               type="file"
@@ -166,13 +168,13 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             <p className="mt-1 text-sm text-gray-500">
-              Upload a new PDF report (max 10MB). Current file will be replaced.
+              Unggah laporan PDF baru (maks 10MB). File yang ada akan diganti.
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Authors (comma-separated)
+              Penulis (dipisahkan koma)
             </label>
             <input
               type="text"
@@ -185,7 +187,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tags (comma-separated)
+              Tag (dipisahkan koma)
             </label>
             <input
               type="text"
@@ -199,7 +201,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Year
+                Tahun
               </label>
               <input
                 type="number"
@@ -214,7 +216,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Assignment Type
+                Tipe Penugasan
               </label>
               <select
                 name="assignment_type"
@@ -222,7 +224,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select assignment type</option>
+                <option value="">Pilih tipe penugasan</option>
                 <option value="skripsi">Tugas Akhir/Skripsi</option>
                 <option value="tugas_matkul">Tugas Mata Kuliah</option>
                 <option value="laporan_kp">Laporan Kerja Praktik</option>
@@ -247,7 +249,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Class Name
+                Nama Kelas
               </label>
               <input
                 type="text"
@@ -262,7 +264,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Course Code
+                Kode Mata Kuliah
               </label>
               <input
                 type="text"
@@ -275,24 +277,37 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
+                Nama Dosen
               </label>
-              <select
-                name="status"
-                value={formData.status}
+              <input
+                type="text"
+                name="lecturer_name"
+                value={formData.lecturer_name}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-                <option value="archived">Archived</option>
-              </select>
+              />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Privacy Level
+              Status
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ongoing">Sedang Berlangsung</option>
+              <option value="completed">Selesai</option>
+              <option value="archived">Diarsipkan</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Tingkat Privasi
             </label>
             <select
               name="privacy_level"
@@ -300,16 +315,16 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="private">Private</option>
-              <option value="advisor">Advisor</option>
-              <option value="class">Class</option>
-              <option value="public">Public</option>
+              <option value="private">Privat</option>
+              <option value="advisor">Pembimbing</option>
+              <option value="class">Kelas</option>
+              <option value="public">Publik</option>
             </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Code Repository URL
+              URL Repositori Kode
             </label>
             <input
               type="url"
@@ -322,7 +337,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Dataset URL
+              URL Dataset
             </label>
             <input
               type="url"
@@ -335,7 +350,7 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Video URL
+              URL Video
             </label>
             <input
               type="url"
@@ -364,14 +379,14 @@ const ProjectEditModal = ({ project, isOpen, onClose, onUpdate }) => {
               onClick={onClose}
               className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Cancel
+              Batal
             </button>
             <button
               type="submit"
               disabled={loading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {loading ? 'Updating...' : 'Update Project'}
+              {loading ? 'Memperbarui...' : 'Perbarui Proyek'}
             </button>
           </div>
         </form>

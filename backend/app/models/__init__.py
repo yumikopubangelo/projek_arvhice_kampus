@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.project import Project, PrivacyLevel, ProjectStatus
 from app.models.access_request import AccessRequest, AccessRequestStatus
 from app.models.file import ProjectFile, FileType
+from app.models.course import Course
 
 # Export all models for easy import
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "AccessRequestStatus",
     "ProjectFile",
     "FileType",
+    "Course",
 ]

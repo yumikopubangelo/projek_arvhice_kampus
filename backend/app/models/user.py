@@ -67,6 +67,21 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    # Course relationships
+    created_courses = relationship(
+        "Course",
+        back_populates="lecturer",
+        foreign_keys="[Course.lecturer_id]",
+        cascade="all, delete-orphan"
+    )
+
+    managed_courses = relationship(
+        "Course",
+        back_populates="creator",
+        foreign_keys="[Course.created_by]",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
     

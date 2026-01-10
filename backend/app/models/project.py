@@ -73,6 +73,7 @@ class Project(Base):
         nullable=True,
         comment="Type of assignment: 'skripsi', 'tugas_matkul', 'laporan_kp', 'lainnya'"
     )
+    lecturer_name = Column(String(200), nullable=True, comment="Nama Dosen")
     
     # Status
     status = Column(

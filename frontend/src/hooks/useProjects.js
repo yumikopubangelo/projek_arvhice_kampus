@@ -8,7 +8,7 @@ const useProjects = () => {
   const getProjects = async (params = {}) => {
     setLoading(true);
     try {
-      const response = await api.get('/projects', { params });
+      const response = await api.get('/search', { params });
       return { success: true, data: response.data };
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Failed to fetch projects';

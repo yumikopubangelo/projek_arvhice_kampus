@@ -49,7 +49,7 @@ const ProjectDetailPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading project...</div>
+        <div className="text-lg">Memuat proyek...</div>
       </div>
     );
   }
@@ -58,13 +58,13 @@ const ProjectDetailPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Project Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Proyek Tidak Ditemukan</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => navigate('/search')}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
-            Back to Search
+            Kembali ke Pencarian
           </button>
         </div>
       </div>
@@ -90,12 +90,17 @@ const ProjectDetailPage = () => {
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">{project.title}</h1>
                 <p className="text-lg text-gray-600 mb-2">
-                  By: {project.uploader?.full_name || project.uploaded_by}
+                  Oleh: {project.uploader?.full_name || project.uploaded_by}
                 </p>
+                {project.lecturer_name && (
+                  <p className="text-md text-gray-600 mb-2">
+                    Dosen: {project.lecturer_name}
+                  </p>
+                )}
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span>Year: {project.year}</span>
+                  <span>Tahun: {project.year}</span>
                   {project.semester && <span>Semester: {project.semester}</span>}
-                  <span>Views: {project.view_count}</span>
+                  <span>Dilihat: {project.view_count}</span>
                 </div>
               </div>
 
@@ -105,7 +110,9 @@ const ProjectDetailPage = () => {
                   project.status === 'ongoing' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {project.status}
+                  {project.status === 'ongoing' && 'Sedang Berlangsung'}
+                  {project.status === 'completed' && 'Selesai'}
+                  {project.status === 'archived' && 'Diarsipkan'}
                 </span>
                 <span className={`px-3 py-1 text-sm rounded-full ${
                   project.privacy_level === 'public' ? 'bg-green-100 text-green-800' :
@@ -113,7 +120,10 @@ const ProjectDetailPage = () => {
                   project.privacy_level === 'class' ? 'bg-yellow-100 text-yellow-800' :
                   'bg-red-100 text-red-800'
                 }`}>
-                  {project.privacy_level}
+                  {project.privacy_level === 'private' && 'Privat'}
+                  {project.privacy_level === 'advisor' && 'Pembimbing'}
+                  {project.privacy_level === 'class' && 'Kelas'}
+                  {project.privacy_level === 'public' && 'Publik'}
                 </span>
               </div>
             </div>
@@ -142,14 +152,14 @@ const ProjectDetailPage = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Abstract */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Abstract</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Abstrak</h2>
               <p className="text-gray-700 leading-relaxed">{project.abstract}</p>
             </div>
 
             {/* Authors */}
             {project.authors && project.authors.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Authors</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Penulis</h2>
                 <div className="flex flex-wrap gap-2">
                   {project.authors.map((author, index) => (
                     <span
@@ -165,11 +175,11 @@ const ProjectDetailPage = () => {
 
             {/* Academic Info */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Academic Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Informasi Akademik</h2>
               <div className="grid grid-cols-2 gap-4">
                 {project.assignment_type && (
                   <div>
-                    <span className="font-medium text-gray-700">Assignment Type:</span>
+                    <span className="font-medium text-gray-700">Tipe Penugasan:</span>
                     <p className="text-gray-600">
                       {project.assignment_type === 'skripsi' && 'Tugas Akhir/Skripsi'}
                       {project.assignment_type === 'tugas_matkul' && 'Tugas Mata Kuliah'}
@@ -180,13 +190,13 @@ const ProjectDetailPage = () => {
                 )}
                 {project.class_name && (
                   <div>
-                    <span className="font-medium text-gray-700">Class:</span>
+                    <span className="font-medium text-gray-700">Kelas:</span>
                     <p className="text-gray-600">{project.class_name}</p>
                   </div>
                 )}
                 {project.course_code && (
                   <div>
-                    <span className="font-medium text-gray-700">Course Code:</span>
+                    <span className="font-medium text-gray-700">Kode Mata Kuliah:</span>
                     <p className="text-gray-600">{project.course_code}</p>
                   </div>
                 )}
@@ -199,9 +209,9 @@ const ProjectDetailPage = () => {
             {/* Access Notice */}
             {user?.role === 'dosen' && project.privacy_level === 'private' && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-yellow-800 mb-2">Limited Access</h3>
+                <h3 className="text-sm font-medium text-yellow-800 mb-2">Akses Terbatas</h3>
                 <p className="text-sm text-yellow-700">
-                  As a lecturer, you can view basic project metadata but not the full content of private projects.
+                  Sebagai dosen, Anda dapat melihat metadata proyek dasar tetapi tidak dapat melihat konten lengkap proyek pribadi.
                 </p>
               </div>
             )}
@@ -212,14 +222,14 @@ const ProjectDetailPage = () => {
                 {/* PDF Download */}
                 {project.pdf_file_path && (
                   <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Files</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">File Proyek</h3>
                     <a
                       href={`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/files/${project.id}/pdf`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                     >
-                      📄 Download PDF ({project.pdf_file_size ? `${(project.pdf_file_size / 1024 / 1024).toFixed(1)}MB` : 'Size unknown'})
+                      📄 Unduh PDF ({project.pdf_file_size ? `${(project.pdf_file_size / 1024 / 1024).toFixed(1)}MB` : 'Ukuran tidak diketahui'})
                     </a>
                   </div>
                 )}
@@ -227,7 +237,7 @@ const ProjectDetailPage = () => {
                 {/* Links */}
                 {(project.code_repo_url || project.dataset_url) && (
                   <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Links</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Tautan</h3>
                     <div className="space-y-2">
                       {project.code_repo_url && (
                         <a
@@ -236,7 +246,7 @@ const ProjectDetailPage = () => {
                           rel="noopener noreferrer"
                           className="block px-3 py-2 text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-md hover:bg-indigo-50"
                         >
-                          🔗 Code Repository
+                          🔗 Repositori Kode
                         </a>
                       )}
                       {project.dataset_url && (
@@ -256,7 +266,7 @@ const ProjectDetailPage = () => {
                 {/* Supplementary Files */}
                 {project.supplementary_files && project.supplementary_files.length > 0 && (
                   <div className="bg-white rounded-lg shadow-sm p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Supplementary Files</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">File Tambahan</h3>
                     <div className="space-y-2">
                       {project.supplementary_files.map((filePath, index) => {
                         // Extract filename from path (e.g., "1/supp_uuid_file.pdf" -> "supp_uuid_file.pdf")
@@ -281,18 +291,18 @@ const ProjectDetailPage = () => {
 
             {/* Metadata */}
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Project Info</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informasi Proyek</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Created:</span>
+                  <span className="text-gray-600">Dibuat:</span>
                   <span className="text-gray-900">{new Date(project.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Last Updated:</span>
+                  <span className="text-gray-600">Terakhir Diperbarui:</span>
                   <span className="text-gray-900">{new Date(project.updated_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Downloads:</span>
+                  <span className="text-gray-600">Unduhan:</span>
                   <span className="text-gray-900">{project.download_count}</span>
                 </div>
               </div>

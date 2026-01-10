@@ -43,6 +43,8 @@ class ProjectBase(BaseModel):
     class_name: Optional[str] = None
     course_code: Optional[str] = None
     assignment_type: Optional[str] = None
+    lecturer_name: Optional[str] = None
+    course_id: Optional[int] = None  # Link to course if project belongs to a specific course
     privacy_level: PrivacyLevel = PrivacyLevel.PRIVATE
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
@@ -157,6 +159,8 @@ class ProjectUpdate(BaseModel):
     code_repo_url: Optional[HttpUrl] = None
     dataset_url: Optional[HttpUrl] = None
     video_url: Optional[HttpUrl] = None
+    lecturer_name: Optional[str] = None
+    course_id: Optional[int] = None
     file_name: Optional[str] = None
 
     model_config = ConfigDict(json_schema_extra={

@@ -17,6 +17,9 @@ from app.schemas.access_request import (
     AccessRequestSummary
 )
 from app.schemas.file import ProjectFile, ProjectFileBase, ProjectFileCreate
+from app.schemas.course import (
+    CourseBase, CourseCreate, CourseRead, CourseUpdate, CourseSummary
+)
 
 # Export all schemas for easy import
 __all__ = [
@@ -34,4 +37,7 @@ __all__ = [
 
     # File schemas
     "ProjectFile", "ProjectFileBase", "ProjectFileCreate",
+
+    # Course schemas
+    "CourseBase", "CourseCreate", "CourseRead", "CourseUpdate", "CourseSummary",
 ]

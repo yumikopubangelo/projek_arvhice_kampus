@@ -9,6 +9,7 @@ from app.routers.projects import router as projects_router
 from app.routers.access import router as access_router
 from app.routers.search import router as search_router
 from app.routers.files import router as files_router
+from app.routers.courses import router as courses_router
 
 # Export routers for easy inclusion in main app
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "projects_router",
     "access_router",
     "search_router",
-    "files_router"
+    "files_router",
+    "courses_router"
 ]

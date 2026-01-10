@@ -11,13 +11,14 @@ Campus Archive Platform adalah sistem manajemen arsip digital yang dirancang khu
 | Kategori | Total Fitur | ✅ Completed | 🔄 In Progress | 📋 Planned |
 |----------|-------------|--------------|----------------|------------|
 | Authentication | 5 | 5 | 0 | 0 |
-| Project Management | 8 | 7 | 1 | 0 |
-| File Management | 6 | 4 | 0 | 2 |
+| Project Management | 9 | 8 | 1 | 0 |
+| Course Management | 6 | 6 | 0 | 0 |
+| File Management | 6 | 5 | 0 | 1 |
 | Search & Discovery | 5 | 4 | 0 | 1 |
 | Access Control | 4 | 4 | 0 | 0 |
-| User Interface | 8 | 7 | 0 | 1 |
+| User Interface | 10 | 9 | 0 | 1 |
 | System Features | 6 | 2 | 0 | 4 |
-| **TOTAL** | **42** | **33** | **1** | **8** |
+| **TOTAL** | **51** | **43** | **1** | **7** |
 
 **Status**: 🔄 **PHASE 1 COMPLETE** - Core features implemented and working. Ready for Phase 2 enhancements.
 
@@ -58,8 +59,8 @@ Campus Archive Platform adalah sistem manajemen arsip digital yang dirancang khu
 - **Unique Filenames**: UUID generation mencegah konflik nama file
 - **Secure Upload**: Comprehensive validation dan error handling
 - **File Deletion from UI**: Hapus file tambahan langsung dari project card (owner only)
-- **PDF Downloads**: Download file PDF dengan tracking jumlah download *(planned)*
-- **Supplementary Files**: Upload dan download file tambahan (gambar, data, dll.) *(planned)*
+- **PDF Downloads**: Download file PDF dengan tracking jumlah download ✅
+- **Supplementary Files**: Upload dan download file tambahan (gambar, data, dll.) ✅
 - **Secure Access**: Kontrol akses file berdasarkan permission dan privacy level
 
 ### 🔒 Access Control & Privacy ✅
@@ -81,6 +82,14 @@ Campus Archive Platform adalah sistem manajemen arsip digital yang dirancang khu
 - **Project Cards**: Display proyek dengan informasi lengkap
 - **Modal Editing**: Edit project tanpa navigasi halaman
 - **Custom Confirmation Modals**: Dialog konfirmasi kustom untuk aksi destruktif (seperti delete)
+
+### 📚 Course Management ✅
+- **Course Creation**: Dosen dapat membuat mata kuliah dengan kode unik per semester
+- **Course Management**: CRUD operations untuk mata kuliah (create, read, update, delete)
+- **Lecturer Dashboard**: Interface khusus dosen untuk mengelola mata kuliah
+- **Course Association**: Proyek dapat dihubungkan dengan mata kuliah tertentu
+- **Validation**: Mencegah duplikasi kode kursus dalam semester yang sama
+- **Auto-suggestions**: Sistem dapat mendeteksi dan mengsugestikan nama dosen dari akun terdaftar
 
 ### 🛠 Technical Features ✅
 - **REST API**: Backend FastAPI dengan dokumentasi API otomatis
@@ -188,6 +197,11 @@ Platform ini menyediakan API RESTful lengkap dengan dokumentasi otomatis:
 - `GET /api/search/suggestions` - Search autocomplete
 - `POST /api/access` - Request access ke project private
 - `GET /api/access/my-requests` - View access requests
+- `GET /api/courses` - List courses milik lecturer (dosen only)
+- `POST /api/courses` - Create course baru (dosen only)
+- `GET /api/courses/{id}` - Get course detail (dosen only)
+- `PUT /api/courses/{id}` - Update course (owner only)
+- `DELETE /api/courses/{id}` - Delete course (owner only)
 - `GET /api/files/{project_id}/pdf` - Download PDF *(planned)*
 - `GET /api/health` - Health check endpoint
 
@@ -355,10 +369,10 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 
 ## 📈 Project Metrics
 
-- **Total Features**: 42
-- **Completed**: 33 (79%)
+- **Total Features**: 43
+- **Completed**: 34 (79%)
 - **In Progress**: 1 (2%)
-- **Planned**: 8 (19%)
+- **Planned**: 7 (16%)
 - **Core Functionality**: ✅ **PRODUCTION READY**
 - **File Storage**: ✅ **USER-ISOLATED & SECURE**
 - **API Coverage**: ✅ **COMPLETE**
