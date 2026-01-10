@@ -68,6 +68,7 @@ const useProjects = () => {
       });
       return { success: true, data: response.data };
     } catch (err) {
+      let errorMessage = 'Failed to update project.';
       if (err.response && err.response.data && err.response.data.detail) {
         if (Array.isArray(err.response.data.detail)) {
           errorMessage = err.response.data.detail.map(e => `${e.loc.join('.')} - ${e.msg}`).join('; ');

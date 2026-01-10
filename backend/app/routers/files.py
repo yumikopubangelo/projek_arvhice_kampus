@@ -84,7 +84,7 @@ def delete_project_file(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to delete files from this project")
 
     # The FileService handles deleting the file from disk and the DB record
-    FileService.delete_file_record(db, file_path=db_file.saved_path)
+    FileService.delete_file_record(db, db_file)
     
     db.commit()
 

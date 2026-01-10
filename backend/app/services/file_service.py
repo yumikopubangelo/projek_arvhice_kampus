@@ -115,17 +115,24 @@ class FileService:
             )
 
     @staticmethod
-    def delete_file_record(db: Session, file_path: str) -> None:
+    def delete_file_record(db: Session, db_file: ProjectFile) -> None:
         """
         Deletes a file from the filesystem and its corresponding record from the database.
+        Requires the db_file object to be passed in.
         """
-        full_path = UPLOAD_DIR / file_path
-        if full_path.exists():
-            full_path.unlink()
+        if not db_file:
+            return
 
-        db_file = db.query(ProjectFile).filter(ProjectFile.saved_path == file_path).first()
-        if db_file:
-            db.delete(db_file)
+        full_path = UPLOAD_DIR / db_file.saved_path
+        if full_path.exists():
+            try:
+                full_path.unlink()
+            except OSError as e:
+                # Log this error, but don't prevent DB deletion for now
+                print(f"Error deleting file from disk {full_path}: {e}")
+
+        # Delete the object from the session
+        db.delete(db_file)
 
     @staticmethod
     async def replace_main_report(
@@ -146,7 +153,7 @@ class FileService:
 
         # Delete the old report from disk and DB if it exists
         if old_report:
-            FileService.delete_file_record(db, old_report.saved_path)
+            FileService.delete_file_record(db, old_report)
 
         # Create the new file record
         await FileService.create_project_file_record(
